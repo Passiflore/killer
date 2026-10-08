@@ -1,12 +1,7 @@
 import express from "express";
 import { Server } from "socket.io";
 import { createServer } from "node:http";
-import { db } from "./db.ts";
-
-const question = db.prepare("SELECT sqlite_version() AS version"); // 2. prépare
-const reponse = question.get();
-
-console.log(reponse);
+import "./db.ts";
 
 const app = express();
 const httpServer = createServer(app);

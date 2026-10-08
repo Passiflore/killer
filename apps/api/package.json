@@ -8,6 +8,7 @@
 	},
 	"dependencies": {
 		"express": "^5.2.1",
+		"shared": "workspace:^",
 		"socket.io": "^4.8.4"
 	},
 	"devDependencies": {

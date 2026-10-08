@@ -13,6 +13,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1
+      shared:
+        specifier: workspace:^
+        version: link:../../packages/shared
       socket.io:
         specifier: ^4.8.4
         version: 4.8.4
@@ -35,6 +38,9 @@ importers:
       react-dom:
         specifier: ^19.2.8
         version: 19.3.0(react@19.3.0)
+      shared:
+        specifier: workspace:^
+        version: link:../../packages/shared
     devDependencies:
       '@eslint/js':
         specifier: ^10.0.1
