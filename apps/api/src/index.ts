@@ -1,0 +1,14 @@
+import express from "express";
+
+const app = express();
+const port = Number(process.env.PORT) || 3000;
+
+app.use(express.json());
+
+app.get("/healthz", (request, response) => {
+	response.json({ ok: true });
+});
+
+app.listen(port, () => {
+	console.log(`Serveur prêt sur http://localhost:${port}`);
+});
