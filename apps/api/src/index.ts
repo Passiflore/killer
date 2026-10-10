@@ -1,7 +1,9 @@
 import express from "express";
 import { Server } from "socket.io";
 import { createServer } from "node:http";
-import "./db.ts";
+import { randomUUID } from "node:crypto";
+import type { Game, JoinResponse, Me, PlayerStatus } from "shared";
+import { db } from "./db.ts";
 
 const app = express();
 const httpServer = createServer(app);
@@ -9,13 +11,150 @@ const port = Number(process.env.PORT) || 3000;
 const io = new Server(httpServer);
 
 io.on("connection", (socket) => {
-	console.log(socket.id, "socket.id");
+	console.log("client connecté :", socket.id);
 });
 
 app.use(express.json());
 
 app.get("/healthz", (request, response) => {
 	response.json({ ok: true });
+});
+
+function getGame(): Game | null {
+	const row = db
+		.prepare(
+			"SELECT status, auto_validate_minutes, started_at, ended_at FROM game WHERE id = 1",
+		)
+		.get() as
+		| {
+				status: Game["status"];
+				auto_validate_minutes: number;
+				started_at: number | null;
+				ended_at: number | null;
+		  }
+		| undefined;
+
+	if (!row) return null;
+	return {
+		status: row.status,
+		autoValidateMinutes: row.auto_validate_minutes,
+		startedAt: row.started_at,
+		endedAt: row.ended_at,
+	};
+}
+
+function getMe(token: string): Me | null {
+	const row = db
+		.prepare(
+			`SELECT p.id, p.name, p.status,
+			        t.id AS target_id, t.name AS target_name,
+			        m.text AS mission
+			 FROM players p
+			 LEFT JOIN players t ON t.id = p.target_id
+			 LEFT JOIN missions m ON m.id = p.mission_id
+			 WHERE p.token = ?`,
+		)
+		.get(token) as
+		| {
+				id: number;
+				name: string;
+				status: PlayerStatus;
+				target_id: number | null;
+				target_name: string | null;
+				mission: string | null;
+		  }
+		| undefined;
+
+	if (!row) return null;
+
+	const alive = row.status === "VIVANT";
+	return {
+		id: row.id,
+		name: row.name,
+		status: row.status,
+		target:
+			alive && row.target_id !== null && row.target_name !== null
+				? { id: row.target_id, name: row.target_name }
+				: null,
+		mission: alive ? row.mission : null,
+	};
+}
+
+function tokenFrom(request: express.Request): string | null {
+	const header = request.headers.authorization;
+	if (!header?.startsWith("Bearer ")) return null;
+	return header.slice("Bearer ".length);
+}
+
+// --- Routes ----------------------------------------------------------------
+
+app.get("/api/game", (request, response) => {
+	response.json(getGame());
+});
+
+// L'organisateur crée la partie et choisit son code secret.
+app.post("/api/game", (request, response) => {
+	const orgaCode = String(request.body?.orgaCode ?? "").trim();
+	if (orgaCode.length < 4) {
+		response
+			.status(400)
+			.json({ error: "Le code orga doit faire au moins 4 caractères." });
+		return;
+	}
+	if (getGame()) {
+		response.status(409).json({ error: "Une partie existe déjà." });
+		return;
+	}
+
+	db.prepare("INSERT INTO game (id, orga_code) VALUES (1, ?)").run(orgaCode);
+	response.status(201).json(getGame());
+});
+
+// Un joueur rejoint la partie avec un nom.
+app.post("/api/players", (request, response) => {
+	const name = String(request.body?.name ?? "").trim();
+	if (name.length === 0 || name.length > 30) {
+		response
+			.status(400)
+			.json({ error: "Ton nom doit faire entre 1 et 30 caractères." });
+		return;
+	}
+
+	const game = getGame();
+	if (!game || game.status !== "LOBBY") {
+		response
+			.status(409)
+			.json({ error: "La partie n'accepte pas de nouveaux joueurs." });
+		return;
+	}
+
+	const token = randomUUID();
+	try {
+		db.prepare(
+			"INSERT INTO players (name, token, joined_at) VALUES (?, ?, ?)",
+		).run(name, token, Date.now());
+	} catch (error) {
+		// La colonne name est UNIQUE : SQLite refuse un nom déjà pris.
+		if (error instanceof Error && error.message.includes("UNIQUE")) {
+			response.status(409).json({ error: "Ce nom est déjà pris." });
+			return;
+		}
+		throw error;
+	}
+
+	const body: JoinResponse = { token, me: getMe(token)! };
+	response.status(201).json(body);
+});
+
+// « Qui suis-je ? » : le téléphone envoie son token, le serveur répond avec SES infos.
+app.get("/api/me", (request, response) => {
+	const token = tokenFrom(request);
+	const me = token ? getMe(token) : null;
+	if (!me) {
+		response.status(401).json({ error: "Joueur inconnu." });
+		return;
+	}
+	response.json(me);
 });
 
 httpServer.listen(port, () => {

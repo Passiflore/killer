@@ -28,3 +28,11 @@ export interface Kill {
 	declaredAt: number;
 	resolvedAt: number | null;
 }
+export interface JoinResponse {
+	token: string;
+	me: Me;
+}
+
+export interface ApiError {
+	error: string;
+}
