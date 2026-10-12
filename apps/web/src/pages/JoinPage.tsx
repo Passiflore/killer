@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ApiError, JoinResponse, Me } from "shared";
+import { TOKEN_KEY } from "../storage";
 
 function JoinPage({ onJoined }: { onJoined: (me: Me) => void }) {
 	const [name, setName] = useState("");
@@ -24,7 +25,7 @@ function JoinPage({ onJoined }: { onJoined: (me: Me) => void }) {
 			}
 
 			const joined = data as JoinResponse;
-			localStorage.setItem("killer-token", joined.token);
+			localStorage.setItem(TOKEN_KEY, joined.token);
 			onJoined(joined.me);
 		} catch (err) {
 			setError(
