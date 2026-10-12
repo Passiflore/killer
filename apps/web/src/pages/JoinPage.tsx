@@ -1,7 +1,7 @@
 import { useState } from "react";
-import type { ApiError, JoinResponse } from "shared";
+import type { ApiError, JoinResponse, Me } from "shared";
 
-function JoinPage() {
+function JoinPage({ onJoined }: { onJoined: (me: Me) => void }) {
 	const [name, setName] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
@@ -17,11 +17,15 @@ function JoinPage() {
 				body: JSON.stringify({ name }),
 			});
 			const data = await response.json();
+
 			if (!response.ok) {
 				setError((data as ApiError).error);
-				console.log(data as JoinResponse);
 				return;
 			}
+
+			const joined = data as JoinResponse;
+			localStorage.setItem("killer-token", joined.token);
+			onJoined(joined.me);
 		} catch (err) {
 			setError(
 				"Impossible de rejoindre la partie. Vérifie ta connexion et réessaie.",
