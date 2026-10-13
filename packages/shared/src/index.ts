@@ -39,4 +39,5 @@ export interface ApiError {
 
 export interface ServerToClientEvents {
 	players: (players: Player[]) => void;
+	game: (game: Game | null) => void;
 }

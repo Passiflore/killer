@@ -12,6 +12,7 @@ import type {
 } from "shared";
 import { db } from "./db.ts";
 import { DEFAULT_MISSIONS } from "./missions.ts";
+import { drawCycle, drawMissions } from "./draw.ts";
 
 const app = express();
 const httpServer = createServer(app);
@@ -20,6 +21,7 @@ const io = new Server<Record<string, never>, ServerToClientEvents>(httpServer);
 
 io.on("connection", (socket) => {
 	socket.emit("players", listPlayers());
+	socket.emit("game", getGame());
 });
 
 app.use(express.json());
@@ -92,6 +94,13 @@ function listPlayers(): Player[] {
 	return db
 		.prepare("SELECT id, name, status FROM players ORDER BY joined_at")
 		.all() as unknown as Player[];
+}
+
+function isOrgaCode(code: unknown): boolean {
+	const row = db.prepare("SELECT orga_code FROM game WHERE id = 1").get() as
+		| { orga_code: string }
+		| undefined;
+	return row !== undefined && code === row.orga_code;
 }
 
 function tokenFrom(request: express.Request): string | null {
@@ -178,6 +187,55 @@ app.get("/api/me", (request, response) => {
 		return;
 	}
 	response.json(me);
+});
+
+// L'orga lance la partie : tirage des cibles et des missions, puis passage EN_COURS.
+app.post("/api/game/start", (request, response) => {
+	if (!isOrgaCode(request.body?.orgaCode)) {
+		response.status(403).json({ error: "Code orga incorrect." });
+		return;
+	}
+	if (getGame()?.status !== "LOBBY") {
+		response.status(409).json({ error: "La partie est déjà lancée." });
+		return;
+	}
+
+	const playerIds = listPlayers().map((player) => player.id);
+	if (playerIds.length < 2) {
+		response
+			.status(409)
+			.json({ error: "Il faut au moins 2 joueurs pour lancer la partie." });
+		return;
+	}
+
+	const missionIds = (
+		db.prepare("SELECT id FROM missions").all() as unknown as { id: number }[]
+	).map((mission) => mission.id);
+
+	const targets = drawCycle(playerIds);
+	const missions = drawMissions(playerIds, missionIds);
+
+	// Transaction : soit tout est écrit, soit rien (pas de partie à moitié lancée).
+	const assign = db.prepare(
+		"UPDATE players SET target_id = ?, mission_id = ? WHERE id = ?",
+	);
+	db.exec("BEGIN");
+	try {
+		for (const playerId of playerIds) {
+			assign.run(targets.get(playerId)!, missions.get(playerId)!, playerId);
+		}
+		db.prepare(
+			"UPDATE game SET status = 'EN_COURS', started_at = ? WHERE id = 1",
+		).run(Date.now());
+		db.exec("COMMIT");
+	} catch (error) {
+		db.exec("ROLLBACK");
+		throw error;
+	}
+
+	// Chaque téléphone apprend que la partie a commencé, puis demande SES infos via /api/me.
+	io.emit("game", getGame());
+	response.json(getGame());
 });
 
 httpServer.listen(port, () => {
