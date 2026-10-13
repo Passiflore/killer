@@ -1,7 +1,12 @@
-import type { Me } from "shared";
+import { useState } from "react";
+import type { Me, Player } from "shared";
 
-// Version provisoire : l'étape 6 ajoutera le masquage et l'appui long.
-function PlayerPage({ me }: { me: Me }) {
+function PlayerPage({ me, players }: { me: Me; players: Player[] }) {
+	const [showTarget, setShowTarget] = useState(false);
+	const [showMission, setShowMission] = useState(false);
+
+	const alivePlayers = players.filter((player) => player.status === "VIVANT");
+
 	if (me.status === "ELIMINE") {
 		return <p>Tu as été éliminé·e 💀</p>;
 	}
@@ -12,9 +17,27 @@ function PlayerPage({ me }: { me: Me }) {
 
 	return (
 		<main>
-			<h1>La partie a commencé !</h1>
-			<p>Ta cible : {me.target.name}</p>
-			<p>Ta mission : {me.mission}</p>
+			<p>{alivePlayers.length} joueurs restants</p>
+
+			<section>
+				<h2>
+					Ta cible{" "}
+					<button type="button" onClick={() => setShowTarget(!showTarget)}>
+						{showTarget ? "Cacher" : "Afficher"}
+					</button>
+				</h2>
+				<p>{showTarget ? me.target.name : "••••••"}</p>
+			</section>
+
+			<section>
+				<h2>
+					Ta mission{" "}
+					<button type="button" onClick={() => setShowMission(!showMission)}>
+						{showMission ? "Cacher" : "Afficher"}
+					</button>
+				</h2>
+				<p>{showMission ? me.mission : "••••••"}</p>
+			</section>
 		</main>
 	);
 }

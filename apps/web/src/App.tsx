@@ -76,7 +76,7 @@ function App() {
 	}
 
 	if (gameStatus === "EN_COURS") {
-		return <PlayerPage me={me} />;
+		return <PlayerPage me={me} players={players} />;
 	}
 
 	return <LobbyPage me={me} players={players} />;
