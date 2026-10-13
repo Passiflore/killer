@@ -11,6 +11,7 @@ import type {
 	ServerToClientEvents,
 } from "shared";
 import { db } from "./db.ts";
+import { DEFAULT_MISSIONS } from "./missions.ts";
 
 const app = express();
 const httpServer = createServer(app);
@@ -120,6 +121,12 @@ app.post("/api/game", (request, response) => {
 	}
 
 	db.prepare("INSERT INTO game (id, orga_code) VALUES (1, ?)").run(orgaCode);
+
+	const insertMission = db.prepare("INSERT INTO missions (text) VALUES (?)");
+	for (const text of DEFAULT_MISSIONS) {
+		insertMission.run(text);
+	}
+
 	response.status(201).json(getGame());
 });
 

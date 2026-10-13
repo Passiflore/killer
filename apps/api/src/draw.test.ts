@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { drawCycle } from "./draw.ts";
+import { drawCycle, drawMissions } from "./draw.ts";
 
 // Part de `start` et suit les cibles jusqu'à revenir au départ.
 // Renvoie la liste des joueurs visités dans l'ordre.
@@ -72,4 +72,29 @@ test("le tirage est aléatoire", () => {
 		results.add(JSON.stringify([...drawCycle(players)]));
 	}
 	assert.ok(results.size > 1, "20 tirages ont tous donné le même résultat");
+});
+
+test("drawMissions donne une mission à chaque joueur", () => {
+	const missions = drawMissions([1, 2, 3], [10, 20, 30, 40]);
+
+	assert.equal(missions.size, 3);
+	for (const missionId of missions.values()) {
+		assert.ok([10, 20, 30, 40].includes(missionId));
+	}
+});
+
+test("drawMissions évite les doublons quand il y a assez de missions", () => {
+	const missions = drawMissions([1, 2, 3, 4], [10, 20, 30, 40]);
+
+	assert.equal(new Set(missions.values()).size, 4);
+});
+
+test("drawMissions réutilise les missions s'il y a plus de joueurs", () => {
+	const missions = drawMissions([1, 2, 3, 4, 5], [10, 20]);
+
+	assert.equal(missions.size, 5);
+});
+
+test("drawMissions refuse une liste de missions vide", () => {
+	assert.throws(() => drawMissions([1, 2], []));
 });
