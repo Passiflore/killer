@@ -1,20 +1,6 @@
-import { useEffect, useState } from "react";
 import type { Me, Player } from "shared";
-import { socket } from "../socket";
 
-function LobbyPage({ me }: { me: Me }) {
-	const [players, setPlayers] = useState<Player[]>([]);
-
-	useEffect(() => {
-		socket.on("players", setPlayers);
-		socket.connect();
-
-		return () => {
-			socket.off("players", setPlayers);
-			socket.disconnect();
-		};
-	}, []);
-
+function LobbyPage({ me, players }: { me: Me; players: Player[] }) {
 	return (
 		<main>
 			<h1>Salut {me.name} 👋</h1>

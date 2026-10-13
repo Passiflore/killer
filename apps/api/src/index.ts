@@ -136,6 +136,7 @@ app.post("/api/game", (request, response) => {
 		insertMission.run(text);
 	}
 
+	io.emit("game", getGame());
 	response.status(201).json(getGame());
 });
 

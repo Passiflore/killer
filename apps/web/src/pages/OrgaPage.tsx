@@ -1,11 +1,11 @@
 import { useState } from "react";
 import type { ApiError } from "shared";
+import { ORGA_CODE_KEY } from "../storage";
 
 function OrgaPage() {
 	const [orgaCode, setOrgaCode] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
-	const [isCreated, setIsCreated] = useState(false);
 
 	async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
 		e.preventDefault();
@@ -25,7 +25,7 @@ function OrgaPage() {
 				return;
 			}
 
-			setIsCreated(true);
+			localStorage.setItem(ORGA_CODE_KEY, orgaCode);
 		} catch (err) {
 			setError(
 				"Impossible de créer la partie. Vérifie ta connexion et réessaie.",
@@ -49,7 +49,6 @@ function OrgaPage() {
 				{isLoading ? "Création…" : "Créer la partie"}
 			</button>
 			{error && <p>{error}</p>}
-			{isCreated && <p>Partie créée avec succès ✅</p>}
 		</form>
 	);
 }
