@@ -4,6 +4,7 @@ import "./App.css";
 import JoinPage from "./pages/JoinPage";
 import { TOKEN_KEY } from "./storage";
 import OrgaPage from "./pages/OrgaPage";
+import LobbyPage from "./pages/LobbyPage";
 
 function App() {
 	const [me, setMe] = useState<Me | null>(null);
@@ -48,7 +49,7 @@ function App() {
 		return <JoinPage onJoined={setMe} />;
 	}
 
-	return <p>Bienvenue {me.name}</p>;
+	return <LobbyPage me={me} />;
 }
 
 export default App;
