@@ -2,16 +2,23 @@ import express from "express";
 import { Server } from "socket.io";
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
-import type { Game, JoinResponse, Me, PlayerStatus } from "shared";
+import type {
+	Game,
+	JoinResponse,
+	Me,
+	Player,
+	PlayerStatus,
+	ServerToClientEvents,
+} from "shared";
 import { db } from "./db.ts";
 
 const app = express();
 const httpServer = createServer(app);
 const port = Number(process.env.PORT) || 3000;
-const io = new Server(httpServer);
+const io = new Server<Record<string, never>, ServerToClientEvents>(httpServer);
 
 io.on("connection", (socket) => {
-	console.log("client connecté :", socket.id);
+	socket.emit("players", listPlayers());
 });
 
 app.use(express.json());
@@ -80,6 +87,12 @@ function getMe(token: string): Me | null {
 	};
 }
 
+function listPlayers(): Player[] {
+	return db
+		.prepare("SELECT id, name, status FROM players ORDER BY joined_at")
+		.all() as unknown as Player[];
+}
+
 function tokenFrom(request: express.Request): string | null {
 	const header = request.headers.authorization;
 	if (!header?.startsWith("Bearer ")) return null;
@@ -141,6 +154,9 @@ app.post("/api/players", (request, response) => {
 		}
 		throw error;
 	}
+
+	// Prévenir tous les téléphones connectés qu'un joueur est arrivé.
+	io.emit("players", listPlayers());
 
 	const body: JoinResponse = { token, me: getMe(token)! };
 	response.status(201).json(body);

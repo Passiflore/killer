@@ -36,3 +36,7 @@ export interface JoinResponse {
 export interface ApiError {
 	error: string;
 }
+
+export interface ServerToClientEvents {
+	players: (players: Player[]) => void;
+}
