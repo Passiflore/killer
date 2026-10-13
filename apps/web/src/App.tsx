@@ -3,6 +3,7 @@ import type { Me } from "shared";
 import "./App.css";
 import JoinPage from "./pages/JoinPage";
 import { TOKEN_KEY } from "./storage";
+import OrgaPage from "./pages/OrgaPage";
 
 function App() {
 	const [me, setMe] = useState<Me | null>(null);
@@ -34,6 +35,10 @@ function App() {
 
 		loadMe(token);
 	}, []);
+
+	if (window.location.pathname === "/orga") {
+		return <OrgaPage />;
+	}
 
 	if (isChecking) {
 		return <p>Chargement…</p>;
