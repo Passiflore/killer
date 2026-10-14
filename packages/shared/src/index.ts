@@ -15,9 +15,19 @@ export interface Player {
 	status: PlayerStatus;
 }
 
+export interface PendingKill {
+	id: number;
+	status: KillStatus;
+	declaredAt: number;
+}
+
 export interface Me extends Player {
 	target: { id: number; name: string } | null;
 	mission: string | null;
+	killCount: number;
+	huntingKill: PendingKill | null;
+	victimKill: PendingKill | null;
+	eliminatedBy: string | null;
 }
 
 export interface Kill {
@@ -40,4 +50,5 @@ export interface ApiError {
 export interface ServerToClientEvents {
 	players: (players: Player[]) => void;
 	game: (game: Game | null) => void;
+	refresh: () => void;
 }

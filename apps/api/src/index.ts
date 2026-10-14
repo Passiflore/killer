@@ -7,12 +7,21 @@ import type {
 	JoinResponse,
 	Me,
 	Player,
+	PendingKill,
 	PlayerStatus,
 	ServerToClientEvents,
 } from "shared";
 import { db } from "./db.ts";
 import { DEFAULT_MISSIONS } from "./missions.ts";
 import { drawCycle, drawMissions } from "./draw.ts";
+import { inTransaction } from "./schema.ts";
+import {
+	contestKill,
+	declareKill,
+	getKill,
+	validateKill,
+	whyCannotDeclareKill,
+} from "./kills.ts";
 
 const app = express();
 const httpServer = createServer(app);
@@ -77,6 +86,20 @@ function getMe(token: string): Me | null {
 
 	if (!row) return null;
 
+	const killCount = (
+		db
+			.prepare(
+				"SELECT COUNT(*) AS n FROM kills WHERE chasseur_id = ? AND status = 'VALIDE'",
+			)
+			.get(row.id) as { n: number }
+	).n;
+	const killer = db
+		.prepare(
+			`SELECT c.name FROM kills k JOIN players c ON c.id = k.chasseur_id
+			 WHERE k.victime_id = ? AND k.status = 'VALIDE'`,
+		)
+		.get(row.id) as { name: string } | undefined;
+
 	const alive = row.status === "VIVANT";
 	return {
 		id: row.id,
@@ -87,7 +110,36 @@ function getMe(token: string): Me | null {
 				? { id: row.target_id, name: row.target_name }
 				: null,
 		mission: alive ? row.mission : null,
+		killCount,
+		huntingKill: alive ? pendingKill("chasseur_id", row.id) : null,
+		victimKill: alive ? pendingKill("victime_id", row.id) : null,
+		eliminatedBy: killer?.name ?? null,
 	};
+}
+
+function pendingKill(
+	column: "chasseur_id" | "victime_id",
+	playerId: number,
+): PendingKill | null {
+	const row = db
+		.prepare(
+			`SELECT id, status, declared_at FROM kills
+			 WHERE ${column} = ? AND status IN ('EN_ATTENTE', 'CONTESTE')`,
+		)
+		.get(playerId) as
+		| { id: number; status: PendingKill["status"]; declared_at: number }
+		| undefined;
+	return row
+		? { id: row.id, status: row.status, declaredAt: row.declared_at }
+		: null;
+}
+
+// Prévient tous les téléphones qu'un kill a changé quelque chose.
+// Chacun redemande ensuite SES infos via /api/me.
+function broadcastChange() {
+	io.emit("players", listPlayers());
+	io.emit("game", getGame());
+	io.emit("refresh");
 }
 
 function listPlayers(): Player[] {
@@ -220,23 +272,70 @@ app.post("/api/game/start", (request, response) => {
 	const assign = db.prepare(
 		"UPDATE players SET target_id = ?, mission_id = ? WHERE id = ?",
 	);
-	db.exec("BEGIN");
-	try {
+	inTransaction(db, () => {
 		for (const playerId of playerIds) {
 			assign.run(targets.get(playerId)!, missions.get(playerId)!, playerId);
 		}
 		db.prepare(
 			"UPDATE game SET status = 'EN_COURS', started_at = ? WHERE id = 1",
 		).run(Date.now());
-		db.exec("COMMIT");
-	} catch (error) {
-		db.exec("ROLLBACK");
-		throw error;
-	}
+	});
 
 	// Chaque téléphone apprend que la partie a commencé, puis demande SES infos via /api/me.
 	io.emit("game", getGame());
 	response.json(getGame());
+});
+
+// Le chasseur déclare avoir tué sa cible.
+app.post("/api/kills", (request, response) => {
+	const token = tokenFrom(request);
+	const me = token ? getMe(token) : null;
+	if (!me) {
+		response.status(401).json({ error: "Joueur inconnu." });
+		return;
+	}
+	if (getGame()?.status !== "EN_COURS") {
+		response.status(409).json({ error: "La partie n'est pas en cours." });
+		return;
+	}
+	const reason = whyCannotDeclareKill(db, me.id);
+	if (reason) {
+		response.status(409).json({ error: reason });
+		return;
+	}
+
+	declareKill(db, me.id, Date.now());
+	broadcastChange();
+	response.status(201).json(getMe(token!));
+});
+
+// La victime répond : « Je me suis fait avoir » (confirm) ou « Contester » (contest).
+app.post("/api/kills/:id/:action", (request, response) => {
+	const token = tokenFrom(request);
+	const me = token ? getMe(token) : null;
+	const kill = getKill(db, Number(request.params.id));
+	const { action } = request.params;
+
+	if (!me || !kill || kill.victime_id !== me.id) {
+		response.status(404).json({ error: "Kill introuvable." });
+		return;
+	}
+	if (kill.status !== "EN_ATTENTE") {
+		response.status(409).json({ error: "Ce kill a déjà reçu une réponse." });
+		return;
+	}
+
+	if (action === "confirm") {
+		validateKill(db, kill.id, Date.now());
+	} else if (action === "contest") {
+		contestKill(db, kill.id);
+	} else {
+		response.status(404).json({ error: "Action inconnue." });
+		return;
+	}
+
+	broadcastChange();
+	response.json(getMe(token!));
 });
 
 httpServer.listen(port, () => {
