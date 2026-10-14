@@ -139,3 +139,21 @@ export function rejectKill(
 		"UPDATE kills SET status = 'REJETE', resolved_at = ? WHERE id = ?",
 	).run(now, killId);
 }
+
+export function autoValidateExpiredKills(
+	db: DatabaseSync,
+	now: number,
+): number {
+	const expired = db
+		.prepare(
+			`SELECT k.id FROM kills k, game g
+			 WHERE k.status = 'EN_ATTENTE'
+			   AND k.declared_at + g.auto_validate_minutes * 60000 <= ?`,
+		)
+		.all(now) as unknown as { id: number }[];
+
+	for (const { id } of expired) {
+		validateKill(db, id, now);
+	}
+	return expired.length;
+}

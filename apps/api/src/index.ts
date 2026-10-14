@@ -16,6 +16,7 @@ import { DEFAULT_MISSIONS } from "./missions.ts";
 import { drawCycle, drawMissions } from "./draw.ts";
 import { inTransaction } from "./schema.ts";
 import {
+	autoValidateExpiredKills,
 	contestKill,
 	declareKill,
 	getKill,
@@ -134,8 +135,6 @@ function pendingKill(
 		: null;
 }
 
-// Prévient tous les téléphones qu'un kill a changé quelque chose.
-// Chacun redemande ensuite SES infos via /api/me.
 function broadcastChange() {
 	io.emit("players", listPlayers());
 	io.emit("game", getGame());
@@ -337,6 +336,14 @@ app.post("/api/kills/:id/:action", (request, response) => {
 	broadcastChange();
 	response.json(getMe(token!));
 });
+
+// Toutes les 10 secondes, le serveur valide les kills restés sans réponse trop longtemps.
+// C'est le serveur qui s'en charge : ça marche même si le téléphone de la victime est éteint.
+setInterval(() => {
+	if (autoValidateExpiredKills(db, Date.now()) > 0) {
+		broadcastChange();
+	}
+}, 10_000);
 
 httpServer.listen(port, () => {
 	console.log(`Serveur prêt sur http://localhost:${port}`);

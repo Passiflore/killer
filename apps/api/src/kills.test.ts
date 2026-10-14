@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import type { DatabaseSync } from "node:sqlite";
 import { createDb } from "./schema.ts";
 import {
+	autoValidateExpiredKills,
 	contestKill,
 	declareKill,
 	getKill,
@@ -170,4 +171,33 @@ test("un kill déjà tranché ne peut plus être validé ni contesté", () => {
 	assert.throws(() => validateKill(db, killId, 3000));
 	assert.throws(() => contestKill(db, killId));
 	assert.throws(() => rejectKill(db, killId, 3000));
+});
+
+test("validation auto : un kill sans réponse depuis 10 min est validé", () => {
+	const db = setup();
+	const killId = declareKill(db, 1, 0);
+
+	assert.equal(autoValidateExpiredKills(db, 9 * 60_000), 0);
+	assert.equal(getKill(db, killId)!.status, "EN_ATTENTE");
+
+	assert.equal(autoValidateExpiredKills(db, 10 * 60_000), 1);
+	assert.equal(getKill(db, killId)!.status, "VALIDE");
+	assert.equal(player(db, 2).status, "ELIMINE");
+});
+
+test("validation auto : un kill contesté attend l'orga", () => {
+	const db = setup();
+	const killId = declareKill(db, 1, 0);
+	contestKill(db, killId);
+
+	assert.equal(autoValidateExpiredKills(db, 60 * 60_000), 0);
+	assert.equal(getKill(db, killId)!.status, "CONTESTE");
+});
+
+test("validation auto : la durée est réglable par partie", () => {
+	const db = setup();
+	db.exec("UPDATE game SET auto_validate_minutes = 2");
+	declareKill(db, 1, 0);
+
+	assert.equal(autoValidateExpiredKills(db, 2 * 60_000), 1);
 });
