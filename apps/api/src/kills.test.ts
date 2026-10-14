@@ -6,7 +6,9 @@ import {
 	autoValidateExpiredKills,
 	contestKill,
 	declareKill,
+	endGame,
 	getKill,
+	getResults,
 	rejectKill,
 	validateKill,
 	whyCannotDeclareKill,
@@ -200,4 +202,40 @@ test("validation auto : la durée est réglable par partie", () => {
 	declareKill(db, 1, 0);
 
 	assert.equal(autoValidateExpiredKills(db, 2 * 60_000), 1);
+});
+
+test("terminer la partie annule les kills en cours", () => {
+	const db = setup();
+	const killId = declareKill(db, 1, 0);
+	endGame(db, 1000);
+
+	const game = db.prepare("SELECT status FROM game").get() as { status: string };
+	assert.equal(game.status, "TERMINEE");
+	assert.equal(getKill(db, killId)!.status, "REJETE");
+	assert.equal(player(db, 2).status, "VIVANT");
+});
+
+test("résultats : le survivant avec le plus de kills gagne", () => {
+	const db = setup();
+	validateKill(db, declareKill(db, 1, 0), 0);
+	endGame(db, 1000);
+
+	const { winners, ranking } = getResults(db);
+	assert.deepEqual(
+		winners.map((p) => p.id),
+		[1],
+	);
+	assert.equal(ranking[0].id, 1);
+	assert.equal(ranking[0].killCount, 1);
+	assert.equal(ranking.at(-1)!.status, "ELIMINE");
+});
+
+test("résultats : ex aequo si plusieurs survivants ont autant de kills", () => {
+	const db = setup();
+	validateKill(db, declareKill(db, 1, 0), 0);
+	validateKill(db, declareKill(db, 3, 0), 0);
+	endGame(db, 1000);
+
+	const { winners } = getResults(db);
+	assert.deepEqual(winners.map((p) => p.id).sort(), [1, 3]);
 });

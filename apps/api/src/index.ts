@@ -20,7 +20,9 @@ import {
 	autoValidateExpiredKills,
 	contestKill,
 	declareKill,
+	endGame,
 	getKill,
+	getResults,
 	rejectKill,
 	validateKill,
 	whyCannotDeclareKill,
@@ -397,6 +399,28 @@ app.post("/api/orga/kills/:id/:decision", (request, response) => {
 
 	broadcastChange();
 	response.status(204).end();
+});
+
+app.post("/api/orga/end", (request, response) => {
+	if (!isOrga(request)) {
+		response.status(403).json({ error: "Code orga incorrect." });
+		return;
+	}
+	if (getGame()?.status !== "EN_COURS") {
+		response.status(409).json({ error: "La partie n'est pas en cours." });
+		return;
+	}
+	endGame(db, Date.now());
+	broadcastChange();
+	response.status(204).end();
+});
+
+app.get("/api/results", (request, response) => {
+	if (getGame()?.status !== "TERMINEE") {
+		response.status(409).json({ error: "La partie n'est pas terminée." });
+		return;
+	}
+	response.json(getResults(db));
 });
 
 // Toutes les 10 secondes, le serveur valide les kills restés sans réponse trop longtemps.

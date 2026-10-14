@@ -126,6 +126,19 @@ function OrgaDashboard({
 					{isLoading ? "Lancement…" : "Lancer la partie"}
 				</button>
 			)}
+			{game.status === "EN_COURS" && (
+				<button
+					type="button"
+					onClick={() => {
+						if (window.confirm("Terminer la partie pour tout le monde ?")) {
+							run("/api/orga/end");
+						}
+					}}
+					disabled={isLoading}
+				>
+					Terminer la partie
+				</button>
+			)}
 			{error && <p>{error}</p>}
 
 			<button type="button" onClick={onLogout}>

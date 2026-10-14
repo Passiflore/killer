@@ -11,6 +11,7 @@ import { useLiveGame } from "./useLiveGame";
 import { socket } from "./socket";
 import KilledPage from "./pages/KilledPage";
 import EliminatedPage from "./pages/EliminatedPage";
+import EndPage from "./pages/EndPage";
 
 // Renvoie le joueur, ou null si le serveur ne reconnaît pas le token.
 async function fetchMe(token: string): Promise<Me | null> {
@@ -80,6 +81,7 @@ function App() {
 	if (window.location.pathname === "/orga") {
 		if (game === undefined) return <p>Chargement…</p>;
 		if (game === null) return <OrgaPage />;
+		if (game.status === "TERMINEE") return <EndPage />;
 		return <OrgaDashboardPage game={game} players={players} />;
 	}
 
@@ -104,8 +106,7 @@ function App() {
 	}
 
 	if (game?.status === "TERMINEE") {
-		// Provisoire : l'écran de fin arrive à l'étape 8c.
-		return <h1>Partie terminée !</h1>;
+		return <EndPage myId={me.id} />;
 	}
 
 	return <LobbyPage me={me} players={players} />;

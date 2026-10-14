@@ -1,5 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
-import type { KillStatus, PlayerStatus } from "shared";
+import type { KillStatus, PlayerResult, PlayerStatus, Results } from "shared";
 import { inTransaction } from "./schema.ts";
 
 const PENDING = "('EN_ATTENTE', 'CONTESTE')";
@@ -156,4 +156,33 @@ export function autoValidateExpiredKills(
 		validateKill(db, id, now);
 	}
 	return expired.length;
+}
+
+export function endGame(db: DatabaseSync, now: number): void {
+	inTransaction(db, () => {
+		db.prepare(
+			`UPDATE kills SET status = 'REJETE', resolved_at = ? WHERE status IN ${PENDING}`,
+		).run(now);
+		db.prepare(
+			"UPDATE game SET status = 'TERMINEE', ended_at = ? WHERE id = 1",
+		).run(now);
+	});
+}
+
+export function getResults(db: DatabaseSync): Results {
+	const ranking = db
+		.prepare(
+			`SELECT p.id, p.name, p.status,
+			        (SELECT COUNT(*) FROM kills k
+			         WHERE k.chasseur_id = p.id AND k.status = 'VALIDE') AS killCount
+			 FROM players p
+			 ORDER BY p.status = 'VIVANT' DESC, killCount DESC, p.name`,
+		)
+		.all() as unknown as PlayerResult[];
+
+	const survivors = ranking.filter((player) => player.status === "VIVANT");
+	const best = Math.max(...survivors.map((player) => player.killCount));
+	const winners = survivors.filter((player) => player.killCount === best);
+
+	return { winners, ranking };
 }

@@ -51,6 +51,18 @@ export interface Contest {
 	mission: string;
 }
 
+export interface PlayerResult {
+	id: number;
+	name: string;
+	status: PlayerStatus;
+	killCount: number;
+}
+
+export interface Results {
+	winners: PlayerResult[];
+	ranking: PlayerResult[];
+}
+
 export interface ApiError {
 	error: string;
 }
