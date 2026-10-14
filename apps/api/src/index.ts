@@ -23,6 +23,7 @@ import {
 	endGame,
 	getKill,
 	getResults,
+	leaveGame,
 	rejectKill,
 	validateKill,
 	whyCannotDeclareKill,
@@ -342,6 +343,23 @@ app.post("/api/kills/:id/:action", (request, response) => {
 		return;
 	}
 
+	broadcastChange();
+	response.json(getMe(token!));
+});
+
+app.post("/api/me/leave", (request, response) => {
+	const token = tokenFrom(request);
+	const me = token ? getMe(token) : null;
+	if (!me) {
+		response.status(401).json({ error: "Joueur inconnu." });
+		return;
+	}
+	if (getGame()?.status !== "EN_COURS" || me.status !== "VIVANT") {
+		response.status(409).json({ error: "Tu ne peux pas quitter la partie." });
+		return;
+	}
+
+	leaveGame(db, me.id, Date.now());
 	broadcastChange();
 	response.json(getMe(token!));
 });

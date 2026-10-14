@@ -9,6 +9,7 @@ import {
 	endGame,
 	getKill,
 	getResults,
+	leaveGame,
 	rejectKill,
 	validateKill,
 	whyCannotDeclareKill,
@@ -238,4 +239,52 @@ test("résultats : ex aequo si plusieurs survivants ont autant de kills", () => 
 
 	const { winners } = getResults(db);
 	assert.deepEqual(winners.map((p) => p.id).sort(), [1, 3]);
+});
+
+test("abandon : le chasseur hérite de la cible et de la mission de celui qui part", () => {
+	const db = setup();
+	leaveGame(db, 2, 1000);
+
+	assert.equal(player(db, 2).status, "ELIMINE");
+	assert.equal(player(db, 1).target_id, 3);
+	assert.equal(player(db, 1).mission_id, 2);
+	assert.deepEqual(aliveCycle(db, 1), [1, 3, 4]);
+});
+
+test("abandon : un kill en cours contre celui qui part est annulé", () => {
+	const db = setup();
+	const killId = declareKill(db, 3, 0);
+	leaveGame(db, 4, 1000);
+
+	assert.equal(getKill(db, killId)!.status, "REJETE");
+	assert.equal(player(db, 3).target_id, 1);
+	assert.equal(whyCannotDeclareKill(db, 3), null);
+});
+
+test("abandon : un kill en cours déclaré par celui qui part est annulé", () => {
+	const db = setup();
+	const killId = declareKill(db, 4, 0);
+	leaveGame(db, 4, 1000);
+
+	assert.equal(getKill(db, killId)!.status, "REJETE");
+	assert.equal(player(db, 1).status, "VIVANT");
+	assert.equal(player(db, 3).target_id, 1);
+});
+
+test("abandon : s'il ne reste qu'un joueur, la partie est terminée", () => {
+	const db = setup();
+	leaveGame(db, 2, 0);
+	leaveGame(db, 3, 0);
+	leaveGame(db, 4, 0);
+
+	const game = db.prepare("SELECT status FROM game").get() as { status: string };
+	assert.equal(game.status, "TERMINEE");
+	assert.equal(player(db, 1).target_id, null);
+});
+
+test("abandon : impossible pour un joueur déjà éliminé", () => {
+	const db = setup();
+	leaveGame(db, 2, 0);
+
+	assert.throws(() => leaveGame(db, 2, 0));
 });

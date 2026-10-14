@@ -4,8 +4,9 @@ function EliminatedPage({ me }: { me: Me }) {
 	return (
 		<main>
 			<h1>
-				Tu t'es fait éliminé(e)
-				{me.eliminatedBy && <> par {me.eliminatedBy}</>}
+				{me.eliminatedBy
+					? `Tu t'es fait éliminé(e) par ${me.eliminatedBy}`
+					: "Tu as quitté la partie"}
 			</h1>
 			<p>
 				avec {me.killCount} kill{me.killCount > 1 && "s"} à ton actif

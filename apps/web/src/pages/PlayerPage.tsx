@@ -44,6 +44,18 @@ function PlayerPage({
 		}
 	}
 
+	async function handleLeave() {
+		if (!window.confirm("Quitter la partie ? Tu ne pourras pas revenir.")) {
+			return;
+		}
+		setError(null);
+		try {
+			onMeChange(await postAsPlayer("/api/me/leave"));
+		} catch (err) {
+			setError(err instanceof Error ? err.message : String(err));
+		}
+	}
+
 	return (
 		<main>
 			<p>{alivePlayers.length} joueurs restants</p>
@@ -79,6 +91,9 @@ function PlayerPage({
 				</button>
 			)}
 			{error && <p>{error}</p>}
+			<button type="button" onClick={handleLeave}>
+				Quitter la partie
+			</button>
 		</main>
 	);
 }

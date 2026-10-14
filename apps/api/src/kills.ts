@@ -186,3 +186,37 @@ export function getResults(db: DatabaseSync): Results {
 
 	return { winners, ranking };
 }
+
+export function leaveGame(db: DatabaseSync, playerId: number, now: number): void {
+	const player = getPlayer(db, playerId);
+	if (!player || player.status !== "VIVANT") {
+		throw new Error("Tu ne fais plus partie de la partie.");
+	}
+	const hunter = db
+		.prepare("SELECT id FROM players WHERE target_id = ? AND status = 'VIVANT'")
+		.get(playerId) as { id: number } | undefined;
+
+	inTransaction(db, () => {
+		db.prepare(
+			`UPDATE kills SET status = 'REJETE', resolved_at = ?
+			 WHERE status IN ${PENDING} AND (chasseur_id = ? OR victime_id = ?)`,
+		).run(now, playerId, playerId);
+		db.prepare(
+			"UPDATE players SET status = 'ELIMINE', target_id = NULL, mission_id = NULL WHERE id = ?",
+		).run(playerId);
+
+		if (!hunter) return;
+		if (player.target_id === hunter.id) {
+			db.prepare(
+				"UPDATE players SET target_id = NULL, mission_id = NULL WHERE id = ?",
+			).run(hunter.id);
+			db.prepare(
+				"UPDATE game SET status = 'TERMINEE', ended_at = ? WHERE id = 1",
+			).run(now);
+		} else {
+			db.prepare(
+				"UPDATE players SET target_id = ?, mission_id = ? WHERE id = ?",
+			).run(player.target_id, player.mission_id, hunter.id);
+		}
+	});
+}
