@@ -1,18 +1,47 @@
 import { useState } from "react";
 import type { Me, Player } from "shared";
+import { postAsPlayer } from "../api";
 
-function PlayerPage({ me, players }: { me: Me; players: Player[] }) {
+function PlayerPage({
+	me,
+	players,
+	onMeChange,
+}: {
+	me: Me;
+	players: Player[];
+	onMeChange: (me: Me) => void;
+}) {
 	const [showTarget, setShowTarget] = useState(false);
 	const [showMission, setShowMission] = useState(false);
+	// La cible déjà vue : si elle change (kill validé), on affiche le badge « New ».
+	const [seenTargetId, setSeenTargetId] = useState(me.target?.id);
+	const [error, setError] = useState<string | null>(null);
+	const [isLoading, setIsLoading] = useState(false);
 
 	const alivePlayers = players.filter((player) => player.status === "VIVANT");
 
-	if (me.status === "ELIMINE") {
-		return <p>Tu as été éliminé·e 💀</p>;
-	}
-
 	if (!me.target) {
 		return <p>Chargement de ta mission…</p>;
+	}
+	const target = me.target;
+	const isNewTarget = target.id !== seenTargetId;
+
+	function toggleTarget() {
+		setShowTarget(!showTarget);
+		setSeenTargetId(target.id);
+	}
+
+	async function handleKill() {
+		if (!window.confirm(`Tu confirmes avoir eu ${target.name} ?`)) return;
+		setError(null);
+		setIsLoading(true);
+		try {
+			onMeChange(await postAsPlayer("/api/kills"));
+		} catch (err) {
+			setError(err instanceof Error ? err.message : String(err));
+		} finally {
+			setIsLoading(false);
+		}
 	}
 
 	return (
@@ -20,13 +49,14 @@ function PlayerPage({ me, players }: { me: Me; players: Player[] }) {
 			<p>{alivePlayers.length} joueurs restants</p>
 
 			<section>
+				{isNewTarget && <p>New</p>}
 				<h2>
 					Ta cible{" "}
-					<button type="button" onClick={() => setShowTarget(!showTarget)}>
+					<button type="button" onClick={toggleTarget}>
 						{showTarget ? "Cacher" : "Afficher"}
 					</button>
 				</h2>
-				<p>{showTarget ? me.target.name : "••••••"}</p>
+				<p>{showTarget ? target.name : "••••••"}</p>
 			</section>
 
 			<section>
@@ -38,6 +68,17 @@ function PlayerPage({ me, players }: { me: Me; players: Player[] }) {
 				</h2>
 				<p>{showMission ? me.mission : "••••••"}</p>
 			</section>
+
+			{me.huntingKill ? (
+				<button type="button" disabled>
+					Kill en attente de validation
+				</button>
+			) : (
+				<button type="button" onClick={handleKill} disabled={isLoading}>
+					J'ai killé
+				</button>
+			)}
+			{error && <p>{error}</p>}
 		</main>
 	);
 }

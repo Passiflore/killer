@@ -8,6 +8,9 @@ import LobbyPage from "./pages/LobbyPage";
 import OrgaDashboardPage from "./pages/OrgaDashboardPage";
 import PlayerPage from "./pages/PlayerPage";
 import { useLiveGame } from "./useLiveGame";
+import { socket } from "./socket";
+import KilledPage from "./pages/KilledPage";
+import EliminatedPage from "./pages/EliminatedPage";
 
 // Renvoie le joueur, ou null si le serveur ne reconnaît pas le token.
 async function fetchMe(token: string): Promise<Me | null> {
@@ -16,6 +19,17 @@ async function fetchMe(token: string): Promise<Me | null> {
 	});
 	if (!response.ok) return null;
 	return (await response.json()) as Me;
+}
+
+// Redemande ses infos au serveur, si le téléphone a un badge.
+function reloadMe(onFound: (me: Me) => void) {
+	const token = localStorage.getItem(TOKEN_KEY);
+	if (!token) return;
+	fetchMe(token)
+		.then((found) => {
+			if (found) onFound(found);
+		})
+		.catch(console.error);
 }
 
 function App() {
@@ -51,15 +65,17 @@ function App() {
 	// Quand la partie démarre, on redemande SES infos : cible et mission viennent d'être tirées.
 	const gameStatus = game?.status;
 	useEffect(() => {
-		const token = localStorage.getItem(TOKEN_KEY);
-		if (gameStatus !== "EN_COURS" || !token) return;
-
-		fetchMe(token)
-			.then((found) => {
-				if (found) setMe(found);
-			})
-			.catch(console.error);
+		if (gameStatus === "EN_COURS") reloadMe(setMe);
 	}, [gameStatus]);
+
+	// Après chaque kill, le serveur envoie « refresh » : on redemande SES infos.
+	useEffect(() => {
+		const onRefresh = () => reloadMe(setMe);
+		socket.on("refresh", onRefresh);
+		return () => {
+			socket.off("refresh", onRefresh);
+		};
+	}, []);
 
 	if (window.location.pathname === "/orga") {
 		if (game === undefined) return <p>Chargement…</p>;
@@ -75,8 +91,21 @@ function App() {
 		return <JoinPage onJoined={setMe} />;
 	}
 
-	if (gameStatus === "EN_COURS") {
-		return <PlayerPage me={me} players={players} />;
+	if (game?.status === "EN_COURS") {
+		if (me.status === "ELIMINE") {
+			return <EliminatedPage me={me} />;
+		}
+		if (me.victimKill) {
+			return (
+				<KilledPage kill={me.victimKill} game={game} onMeChange={setMe} />
+			);
+		}
+		return <PlayerPage me={me} players={players} onMeChange={setMe} />;
+	}
+
+	if (game?.status === "TERMINEE") {
+		// Provisoire : l'écran de fin arrive à l'étape 8c.
+		return <h1>Partie terminée !</h1>;
 	}
 
 	return <LobbyPage me={me} players={players} />;
