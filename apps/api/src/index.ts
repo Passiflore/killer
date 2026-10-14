@@ -3,6 +3,7 @@ import { Server } from "socket.io";
 import { createServer } from "node:http";
 import { randomUUID } from "node:crypto";
 import type {
+	Contest,
 	Game,
 	JoinResponse,
 	Me,
@@ -20,6 +21,7 @@ import {
 	contestKill,
 	declareKill,
 	getKill,
+	rejectKill,
 	validateKill,
 	whyCannotDeclareKill,
 } from "./kills.ts";
@@ -147,6 +149,11 @@ function listPlayers(): Player[] {
 		.all() as unknown as Player[];
 }
 
+// Les actions orga envoient le code secret dans l'en-tête X-Orga-Code.
+function isOrga(request: express.Request): boolean {
+	return isOrgaCode(request.get("X-Orga-Code"));
+}
+
 function isOrgaCode(code: unknown): boolean {
 	const row = db.prepare("SELECT orga_code FROM game WHERE id = 1").get() as
 		| { orga_code: string }
@@ -243,7 +250,7 @@ app.get("/api/me", (request, response) => {
 
 // L'orga lance la partie : tirage des cibles et des missions, puis passage EN_COURS.
 app.post("/api/game/start", (request, response) => {
-	if (!isOrgaCode(request.body?.orgaCode)) {
+	if (!isOrga(request)) {
 		response.status(403).json({ error: "Code orga incorrect." });
 		return;
 	}
@@ -335,6 +342,61 @@ app.post("/api/kills/:id/:action", (request, response) => {
 
 	broadcastChange();
 	response.json(getMe(token!));
+});
+
+// L'orga vérifie son code avant d'accéder à son espace.
+app.post("/api/orga/login", (request, response) => {
+	if (!isOrga(request)) {
+		response.status(403).json({ error: "Code orga incorrect." });
+		return;
+	}
+	response.status(204).end();
+});
+
+// Les kills contestés, que l'orga doit trancher.
+app.get("/api/orga/contests", (request, response) => {
+	if (!isOrga(request)) {
+		response.status(403).json({ error: "Code orga incorrect." });
+		return;
+	}
+	const contests = db
+		.prepare(
+			`SELECT k.id AS killId, c.name AS chasseurName, v.name AS victimeName, m.text AS mission
+			 FROM kills k
+			 JOIN players c ON c.id = k.chasseur_id
+			 JOIN players v ON v.id = k.victime_id
+			 JOIN missions m ON m.id = k.mission_id
+			 WHERE k.status = 'CONTESTE'
+			 ORDER BY k.declared_at`,
+		)
+		.all() as unknown as Contest[];
+	response.json(contests);
+});
+
+// L'orga tranche une contestation : accept (kill validé) ou reject (kill annulé).
+app.post("/api/orga/kills/:id/:decision", (request, response) => {
+	if (!isOrga(request)) {
+		response.status(403).json({ error: "Code orga incorrect." });
+		return;
+	}
+	const kill = getKill(db, Number(request.params.id));
+	if (kill?.status !== "CONTESTE") {
+		response.status(409).json({ error: "Ce kill n'est plus contesté." });
+		return;
+	}
+
+	const { decision } = request.params;
+	if (decision === "accept") {
+		validateKill(db, kill.id, Date.now());
+	} else if (decision === "reject") {
+		rejectKill(db, kill.id, Date.now());
+	} else {
+		response.status(404).json({ error: "Décision inconnue." });
+		return;
+	}
+
+	broadcastChange();
+	response.status(204).end();
 });
 
 // Toutes les 10 secondes, le serveur valide les kills restés sans réponse trop longtemps.

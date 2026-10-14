@@ -43,6 +43,14 @@ export interface JoinResponse {
 	me: Me;
 }
 
+// Kill contesté que l'orga doit trancher.
+export interface Contest {
+	killId: number;
+	chasseurName: string;
+	victimeName: string;
+	mission: string;
+}
+
 export interface ApiError {
 	error: string;
 }
