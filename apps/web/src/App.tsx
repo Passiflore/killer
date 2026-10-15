@@ -4,7 +4,7 @@ import JoinPage from "./pages/JoinPage/JoinPage";
 import HomePage from "./pages/HomePage/HomePage";
 import { TOKEN_KEY } from "./storage";
 import CreateGamePage from "./pages/CreateGamePage/CreateGamePage";
-import LobbyPage from "./pages/LobbyPage";
+import LobbyPage from "./pages/LobbyPage/LobbyPage";
 import OrgaDashboardPage from "./pages/OrgaDashBoardPage/OrgaDashboardPage";
 import PlayerPage from "./pages/PlayerPage";
 import { useLiveGame } from "./useLiveGame";
@@ -125,7 +125,7 @@ function App() {
 		return <EndPage myId={me.id} />;
 	}
 
-	return <LobbyPage me={me} players={players} />;
+	return <LobbyPage me={me} game={game} players={players} />;
 }
 
 export default App;

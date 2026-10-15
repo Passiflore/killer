@@ -128,6 +128,7 @@ function getMe(token: string): Me | null {
 		huntingKill: alive ? pendingKill("chasseur_id", row.id) : null,
 		victimKill: alive ? pendingKill("victime_id", row.id) : null,
 		eliminatedBy: killer?.name ?? null,
+		gameCode: gameCode(),
 	};
 }
 
@@ -176,6 +177,13 @@ function generateCode(length: number): string {
 	return code;
 }
 
+function gameCode(): string {
+	const row = db.prepare("SELECT code FROM game WHERE id = 1").get() as
+		| { code: string }
+		| undefined;
+	return row?.code ?? "";
+}
+
 function isValidPhoto(photo: unknown): photo is string | null {
 	return (
 		photo === null ||
@@ -198,13 +206,11 @@ function insertPlayer(name: string, photo: string | null): string {
 }
 
 function isGameCode(code: unknown): boolean {
-	const row = db.prepare("SELECT code FROM game WHERE id = 1").get() as
-		| { code: string }
-		| undefined;
+	const expected = gameCode();
 	return (
-		row !== undefined &&
+		expected !== "" &&
 		typeof code === "string" &&
-		code.trim().toUpperCase() === row.code
+		code.trim().toUpperCase() === expected
 	);
 }
 
@@ -510,10 +516,7 @@ app.get("/api/orga/code", (request, response) => {
 		response.status(403).json({ error: "Code orga incorrect." });
 		return;
 	}
-	const row = db.prepare("SELECT code FROM game WHERE id = 1").get() as {
-		code: string;
-	};
-	response.json({ code: row.code });
+	response.json({ code: gameCode() });
 });
 
 app.post("/api/orga/login", (request, response) => {

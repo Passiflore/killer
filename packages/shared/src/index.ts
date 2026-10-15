@@ -31,6 +31,7 @@ export interface Me extends Player {
 	huntingKill: PendingKill | null;
 	victimKill: PendingKill | null;
 	eliminatedBy: string | null;
+	gameCode: string;
 }
 
 export interface Kill {
