@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
-import type { Contest, Game, Player } from "shared";
+import type { Contest, Game, GameEvent, Player } from "shared";
 import { orgaRequest } from "../../api";
+import BrandBar from "../../components/BrandBar/BrandBar";
 import { socket } from "../../socket";
 import { ORGA_CODE_KEY } from "../../storage";
 import AdminLobby from "./AdminLobby";
+import ContestBanner from "./ContestBanner";
+import EndTimeEditor from "./EndTimeEditor";
+import EventFeed from "./EventFeed";
+import styles from "./OrgaDashboardPage.module.css";
+import PlayersRow from "./PlayersRow";
 
 function OrgaLogin({ onLogin }: { onLogin: (orgaCode: string) => void }) {
 	const [orgaCode, setOrgaCode] = useState("");
@@ -13,8 +19,8 @@ function OrgaLogin({ onLogin }: { onLogin: (orgaCode: string) => void }) {
 		e.preventDefault();
 		setError(null);
 		try {
-			await orgaRequest("/api/orga/login", orgaCode);
-			onLogin(orgaCode);
+			await orgaRequest("/api/orga/login", orgaCode.trim().toUpperCase());
+			onLogin(orgaCode.trim().toUpperCase());
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		}
@@ -22,16 +28,29 @@ function OrgaLogin({ onLogin }: { onLogin: (orgaCode: string) => void }) {
 
 	return (
 		<form onSubmit={handleSubmit}>
-			<h1>Espace orga</h1>
-			<label htmlFor="orgaCode">Code orga</label>
-			<input
-				id="orgaCode"
-				type="password"
-				value={orgaCode}
-				onChange={(event) => setOrgaCode(event.target.value)}
-			/>
-			<button type="submit">Entrer</button>
-			{error && <p>{error}</p>}
+			<div className="topbar">
+				<a className="link" href="/">
+					← Retour à l'accueil
+				</a>
+			</div>
+			<p className={styles.adminTitle}>Admin</p>
+			<div className="field">
+				<label htmlFor="orgaCode">Code orga</label>
+				<input
+					id="orgaCode"
+					value={orgaCode}
+					onChange={(event) => setOrgaCode(event.target.value)}
+					autoCapitalize="characters"
+					autoComplete="off"
+					aria-invalid={error !== null}
+				/>
+				{error && <p className="error">{error}</p>}
+			</div>
+			<div className="actions">
+				<button type="submit" className="button" disabled={!orgaCode.trim()}>
+					Entrer
+				</button>
+			</div>
 		</form>
 	);
 }
@@ -50,23 +69,28 @@ function OrgaDashboard({
 	onLogout: () => void;
 }) {
 	const [contests, setContests] = useState<Contest[]>([]);
+	const [events, setEvents] = useState<GameEvent[]>([]);
 	const [gameCode, setGameCode] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 
-	// Les contestations : chargées à l'ouverture, puis à chaque « refresh » du serveur.
 	useEffect(() => {
-		function loadContests() {
+		function load() {
 			orgaRequest("/api/orga/contests", orgaCode, "GET")
 				.then((data) => setContests(data as Contest[]))
 				.catch(console.error);
+			if (!isParticipant) {
+				orgaRequest("/api/orga/events", orgaCode, "GET")
+					.then((data) => setEvents(data as GameEvent[]))
+					.catch(console.error);
+			}
 		}
-		loadContests();
-		socket.on("refresh", loadContests);
+		load();
+		socket.on("refresh", load);
 		return () => {
-			socket.off("refresh", loadContests);
+			socket.off("refresh", load);
 		};
-	}, [orgaCode]);
+	}, [orgaCode, isParticipant]);
 
 	useEffect(() => {
 		orgaRequest("/api/orga/code", orgaCode, "GET")
@@ -74,11 +98,11 @@ function OrgaDashboard({
 			.catch(console.error);
 	}, [orgaCode]);
 
-	async function run(path: string) {
+	async function run(path: string, body?: unknown) {
 		setError(null);
 		setIsLoading(true);
 		try {
-			await orgaRequest(path, orgaCode);
+			await orgaRequest(path, orgaCode, "POST", body);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		} finally {
@@ -100,58 +124,53 @@ function OrgaDashboard({
 
 	const alivePlayers = players.filter((player) => player.status === "VIVANT");
 
+	function removePlayer(player: Player) {
+		if (window.confirm(`Retirer ${player.name} de la partie ?`)) {
+			run(`/api/orga/players/${player.id}/remove`);
+		}
+	}
+
 	return (
 		<main>
-			<h1>Admin</h1>
-
-			{gameCode && (
-				<p>
-					Code de la partie : {gameCode}
-					<br />
-					Lien d'invitation : {window.location.origin}/?code={gameCode}
-					<br />
-					Code orga (pour te reconnecter ailleurs) : {orgaCode}
-				</p>
-			)}
-
 			{contests.map((contest) => (
-				<section key={contest.killId}>
-					<p>
-						Débat en cours, va voir {contest.chasseurName} et{" "}
-						{contest.victimeName}
-					</p>
-					<p>Mission : {contest.mission}</p>
-					<button
-						type="button"
-						onClick={() => run(`/api/orga/kills/${contest.killId}/accept`)}
-						disabled={isLoading}
-					>
-						Accepte le kill
-					</button>
-					<button
-						type="button"
-						onClick={() => run(`/api/orga/kills/${contest.killId}/reject`)}
-						disabled={isLoading}
-					>
-						Renie le kill
-					</button>
-				</section>
+				<ContestBanner
+					key={contest.killId}
+					contest={contest}
+					isLoading={isLoading}
+					onDecide={(decision) =>
+						run(`/api/orga/kills/${contest.killId}/${decision}`)
+					}
+				/>
 			))}
 
-			<p>Statut : {game.status}</p>
-			<h2>{alivePlayers.length} joueurs restants</h2>
-			<ul>
-				{players.map((player) => (
-					<li key={player.id}>
-						{player.name}
-						{player.status === "ELIMINE" && " 💀"}
-					</li>
-				))}
-			</ul>
+			<BrandBar title="Admin" gameName={game.name} />
 
-			{game.status === "EN_COURS" && (
+			{isParticipant && (
+				<a className="button" href="/">
+					Retour au jeu
+				</a>
+			)}
+
+			<EndTimeEditor
+				game={game}
+				onSave={(endsAt) => run("/api/orga/ends-at", { endsAt })}
+			/>
+
+			<PlayersRow players={alivePlayers} onRemove={removePlayer} />
+
+			{!isParticipant && (
+				<EventFeed
+					events={events}
+					alivePlayers={alivePlayers}
+					startedAt={game.startedAt}
+				/>
+			)}
+
+			<div className="actions">
+				{error && <p className="error">{error}</p>}
 				<button
 					type="button"
+					className="button secondary"
 					onClick={() => {
 						if (window.confirm("Terminer la partie pour tout le monde ?")) {
 							run("/api/orga/end");
@@ -161,17 +180,17 @@ function OrgaDashboard({
 				>
 					Terminer la partie
 				</button>
-			)}
-			{error && <p>{error}</p>}
-
-			<button type="button" onClick={onLogout}>
-				Changer de code orga
-			</button>
+				<p className="hint center">
+					Code orga : {orgaCode} ·{" "}
+					<button type="button" className={styles.logout} onClick={onLogout}>
+						changer
+					</button>
+				</p>
+			</div>
 		</main>
 	);
 }
 
-// Demande le code orga s'il n'est pas déjà connu, puis affiche le tableau de bord.
 function OrgaDashboardPage({
 	game,
 	players,

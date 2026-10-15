@@ -1,0 +1,217 @@
+.adminTitle {
+	margin: 24px 0 8px;
+	font-family: var(--font-hand);
+	font-size: 40px;
+	text-transform: uppercase;
+}
+
+.contest {
+	--lime: #cfdc84;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 12px;
+	border: 1px solid var(--lime);
+	background: color-mix(in srgb, var(--lime) 6%, var(--bg));
+}
+
+.contestTitle {
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--lime);
+}
+
+.contestBody {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	font-size: 15px;
+}
+
+.contestPhotos {
+	display: flex;
+	gap: 4px;
+}
+
+.contestMission {
+	font-size: 13px;
+	color: var(--text-soft);
+}
+
+.contestActions {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 12px;
+}
+
+.accept,
+.reject {
+	min-height: 48px;
+	border: 1px solid var(--lime);
+	font-family: var(--font-hand);
+	font-size: 16px;
+	text-transform: uppercase;
+}
+
+.accept {
+	background: var(--lime);
+	color: var(--bg);
+}
+
+.reject {
+	background: var(--bg);
+	border-color: var(--border);
+	color: var(--text);
+}
+
+.smallPhoto {
+	display: block;
+	width: 40px;
+	height: 40px;
+	flex-shrink: 0;
+	object-fit: cover;
+	border-radius: 2px;
+}
+
+.timer {
+	padding-bottom: 20px;
+	border-bottom: 1px solid var(--border);
+}
+
+.timerRow {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.timerEdit {
+	display: grid;
+	grid-template-columns: 1fr auto auto;
+	gap: 8px;
+}
+
+.timerEdit :global(.button) {
+	min-height: 0;
+	padding: 0 16px;
+	font-size: 14px;
+}
+
+.remaining {
+	margin-bottom: 16px;
+	font-size: 16px;
+}
+
+.playersRow {
+	display: flex;
+	gap: 12px;
+	margin: 0 calc(-1 * var(--gutter));
+	padding: 0 var(--gutter) 20px;
+	overflow-x: auto;
+	list-style: none;
+	border-bottom: 1px solid var(--border);
+}
+
+.playerItem {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	width: 72px;
+	flex-shrink: 0;
+}
+
+.playerPhotoWrap {
+	position: relative;
+}
+
+.playerPhoto {
+	display: block;
+	width: 72px;
+	height: 72px;
+	object-fit: cover;
+	border-radius: 2px;
+}
+
+.remove {
+	position: absolute;
+	top: 4px;
+	right: 4px;
+	display: flex;
+	padding: 3px;
+	border: none;
+	background: var(--red);
+	color: var(--text);
+}
+
+.playerName {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	font-size: 13px;
+	color: var(--text-soft);
+}
+
+.sectionTitle {
+	margin-bottom: 16px;
+	font-size: 18px;
+	color: var(--text);
+}
+
+.duel {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 8px;
+	padding: 10px;
+	background: var(--surface);
+}
+
+.versus {
+	font-size: 12px;
+	color: var(--red);
+}
+
+.empty {
+	font-size: 14px;
+	color: var(--text-muted);
+}
+
+.events {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.event {
+	padding: 14px 0;
+	border-bottom: 1px solid var(--border);
+	font-size: 14px;
+}
+
+.eventHeader {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 8px;
+}
+
+.eventName {
+	color: var(--red);
+}
+
+.eventTime {
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.logout {
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	letter-spacing: inherit;
+	text-transform: inherit;
+	text-decoration: underline;
+}

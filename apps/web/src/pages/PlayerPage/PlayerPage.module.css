@@ -16,6 +16,7 @@
 
 .card {
 	padding: 20px;
+	margin-top: 8px;
 	background: var(--text);
 	color: var(--bg);
 }

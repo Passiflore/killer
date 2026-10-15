@@ -14,6 +14,7 @@ export function createDb(path: string): DatabaseSync {
 			name                  TEXT    NOT NULL,
 			orga_name             TEXT    NOT NULL,
 			ends_at               INTEGER,
+			orga_plays            INTEGER NOT NULL DEFAULT 0,
 			auto_validate_minutes INTEGER NOT NULL DEFAULT 10,
 			started_at            INTEGER,
 			ended_at              INTEGER

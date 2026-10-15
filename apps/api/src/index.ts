@@ -7,6 +7,7 @@ import type {
 	CreateGameResponse,
 	CustomMission,
 	Game,
+	GameEvent,
 	JoinResponse,
 	Me,
 	Player,
@@ -286,9 +287,9 @@ app.post("/api/game", (request, response) => {
 	let token: string | null = null;
 	inTransaction(db, () => {
 		db.prepare(
-			`INSERT INTO game (id, orga_code, code, name, orga_name, ends_at)
-			 VALUES (1, ?, ?, ?, ?, ?)`,
-		).run(orgaCode, generateCode(4), name, orgaName, endsAt);
+			`INSERT INTO game (id, orga_code, code, name, orga_name, ends_at, orga_plays)
+			 VALUES (1, ?, ?, ?, ?, ?, ?)`,
+		).run(orgaCode, generateCode(4), name, orgaName, endsAt, participant ? 1 : 0);
 
 		const insertMission = db.prepare(
 			"INSERT INTO missions (text, custom) VALUES (?, ?)",
@@ -588,7 +589,8 @@ app.get("/api/orga/contests", (request, response) => {
 	}
 	const contests = db
 		.prepare(
-			`SELECT k.id AS killId, c.name AS chasseurName, v.name AS victimeName, m.text AS mission
+			`SELECT k.id AS killId, c.id AS chasseurId, c.name AS chasseurName,
+			        v.id AS victimeId, v.name AS victimeName, m.text AS mission
 			 FROM kills k
 			 JOIN players c ON c.id = k.chasseur_id
 			 JOIN players v ON v.id = k.victime_id
@@ -598,6 +600,74 @@ app.get("/api/orga/contests", (request, response) => {
 		)
 		.all() as unknown as Contest[];
 	response.json(contests);
+});
+
+app.get("/api/orga/events", (request, response) => {
+	if (!isOrga(request)) {
+		response.status(403).json({ error: "Code orga incorrect." });
+		return;
+	}
+	const { orga_plays } = db
+		.prepare("SELECT orga_plays FROM game WHERE id = 1")
+		.get() as { orga_plays: number };
+	if (orga_plays) {
+		response
+			.status(403)
+			.json({ error: "Le fil est masqué quand l'organisateur joue." });
+		return;
+	}
+	const events = db
+		.prepare(
+			`SELECT k.id AS killId, c.id AS chasseurId, c.name AS chasseurName,
+			        v.id AS victimeId, v.name AS victimeName, m.text AS mission,
+			        k.resolved_at AS resolvedAt
+			 FROM kills k
+			 JOIN players c ON c.id = k.chasseur_id
+			 JOIN players v ON v.id = k.victime_id
+			 JOIN missions m ON m.id = k.mission_id
+			 WHERE k.status = 'VALIDE'
+			 ORDER BY k.resolved_at DESC`,
+		)
+		.all() as unknown as GameEvent[];
+	response.json(events);
+});
+
+app.post("/api/orga/ends-at", (request, response) => {
+	if (!isOrga(request)) {
+		response.status(403).json({ error: "Code orga incorrect." });
+		return;
+	}
+	const endsAt = request.body?.endsAt ?? null;
+	if (endsAt !== null && (typeof endsAt !== "number" || endsAt <= Date.now())) {
+		response.status(400).json({ error: "L'heure de fin doit être à venir." });
+		return;
+	}
+	if (getGame()?.status === "TERMINEE") {
+		response.status(409).json({ error: "La partie est terminée." });
+		return;
+	}
+	db.prepare("UPDATE game SET ends_at = ? WHERE id = 1").run(endsAt);
+	io.emit("game", getGame());
+	response.status(204).end();
+});
+
+app.post("/api/orga/players/:id/remove", (request, response) => {
+	if (!isOrga(request)) {
+		response.status(403).json({ error: "Code orga incorrect." });
+		return;
+	}
+	if (getGame()?.status !== "EN_COURS") {
+		response.status(409).json({ error: "La partie n'est pas en cours." });
+		return;
+	}
+	try {
+		leaveGame(db, Number(request.params.id), Date.now());
+	} catch {
+		response.status(409).json({ error: "Ce joueur n'est plus en jeu." });
+		return;
+	}
+	broadcastChange();
+	response.status(204).end();
 });
 
 // L'orga tranche une contestation : accept (kill validé) ou reject (kill annulé).
@@ -651,7 +721,14 @@ app.get("/api/results", (request, response) => {
 // Toutes les 10 secondes, le serveur valide les kills restés sans réponse trop longtemps.
 // C'est le serveur qui s'en charge : ça marche même si le téléphone de la victime est éteint.
 setInterval(() => {
-	if (autoValidateExpiredKills(db, Date.now()) > 0) {
+	const now = Date.now();
+	const game = getGame();
+	if (game?.status === "EN_COURS" && game.endsAt !== null && now >= game.endsAt) {
+		endGame(db, now);
+		broadcastChange();
+		return;
+	}
+	if (autoValidateExpiredKills(db, now) > 0) {
 		broadcastChange();
 	}
 }, 10_000);

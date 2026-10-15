@@ -50,9 +50,21 @@ export interface JoinResponse {
 // Kill contesté que l'orga doit trancher.
 export interface Contest {
 	killId: number;
+	chasseurId: number;
 	chasseurName: string;
+	victimeId: number;
 	victimeName: string;
 	mission: string;
+}
+
+export interface GameEvent {
+	killId: number;
+	chasseurId: number;
+	chasseurName: string;
+	victimeId: number;
+	victimeName: string;
+	mission: string;
+	resolvedAt: number;
 }
 
 export interface PlayerResult {
