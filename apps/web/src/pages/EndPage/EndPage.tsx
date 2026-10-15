@@ -1,11 +1,53 @@
 import { useEffect, useState } from "react";
-import type { Results } from "shared";
+import type { Game, PlayerResult, Results } from "shared";
+import EndGame from "../../assets/EndGame";
+import Avatar from "../../components/Avatar/Avatar";
+import styles from "./EndPage.module.css";
+
+function duration(game: Game): string {
+	const minutes = Math.max(
+		0,
+		Math.round(((game.endedAt ?? Date.now()) - (game.startedAt ?? Date.now())) / 60_000),
+	);
+	const hours = Math.floor(minutes / 60);
+	return hours > 0
+		? `${hours}h${String(minutes % 60).padStart(2, "0")}`
+		: `${minutes} min`;
+}
+
+function describe(mission: string): string {
+	const match = mission.match(/^Fais-lui (.*)$/i);
+	return match ? `Lui a fait ${match[1]}` : mission;
+}
 
 function kills(count: number) {
 	return `${count} kill${count > 1 ? "s" : ""}`;
 }
 
-function EndPage({ myId }: { myId?: number }) {
+function AwardCard({
+	title,
+	subtitle,
+	playerId,
+	playerName,
+}: {
+	title: string;
+	subtitle: string;
+	playerId: number;
+	playerName: string;
+}) {
+	return (
+		<div className={styles.award}>
+			<p className="eyebrow">{title}</p>
+			<div className={styles.awardPlayer}>
+				<Avatar playerId={playerId} className={styles.smallPhoto} />
+				<span className={styles.awardName}>{playerName}</span>
+			</div>
+			<p className={styles.awardSubtitle}>{subtitle}</p>
+		</div>
+	);
+}
+
+function EndPage({ game }: { game: Game }) {
 	const [results, setResults] = useState<Results | null>(null);
 
 	useEffect(() => {
@@ -19,30 +61,104 @@ function EndPage({ myId }: { myId?: number }) {
 		return <p>Chargement des résultats…</p>;
 	}
 
-	const { winners, ranking } = results;
+	const winnerIds = new Set(results.winners.map((winner) => winner.id));
+	const survivors = results.ranking
+		.filter((player) => player.status === "VIVANT")
+		.sort((a, b) => Number(winnerIds.has(b.id)) - Number(winnerIds.has(a.id)));
+	const topKillers: PlayerResult[] = [...results.ranking]
+		.filter((player) => player.killCount > 0)
+		.sort((a, b) => b.killCount - a.killCount)
+		.slice(0, 3);
+	const firstKill = results.kills[0];
 
 	return (
 		<main>
-			<h1>Partie terminée !</h1>
+			<div>
+				<p className="eyebrow">[{game.name}] / Dossier classé</p>
+				<p className={styles.title}>Fin de partie</p>
+			</div>
 
-			<h2>{winners.length > 1 ? "Ex aequo 🏆" : "Victoire 🏆"}</h2>
-			{winners.map((winner) => (
-				<p key={winner.id}>
-					{winner.name} ({kills(winner.killCount)})
-					{winner.id === myId && " — c'est toi !"}
-				</p>
-			))}
+			<div className={styles.illustration}>
+				<EndGame />
+			</div>
 
-			<h2>Classement</h2>
-			<ol>
-				{ranking.map((player) => (
-					<li key={player.id}>
-						{player.name} : {kills(player.killCount)}
-						{player.status === "ELIMINE" && " 💀"}
-						{player.id === myId && " (toi)"}
-					</li>
-				))}
-			</ol>
+			<div className={styles.stats}>
+				<div>
+					<p className="label">
+						Durée de
+						<br />
+						la partie
+					</p>
+					<p className={styles.duration}>{duration(game)}</p>
+				</div>
+				<div>
+					<p className="label">Joueurs encore en vie</p>
+					<ul className={styles.survivors}>
+						{survivors.map((player) => (
+							<li key={player.id} className={styles.survivor}>
+								<Avatar playerId={player.id} className={styles.smallPhoto} />
+								<span>
+									{winnerIds.has(player.id) && "👑 "}
+									{player.name}
+								</span>
+							</li>
+						))}
+					</ul>
+				</div>
+			</div>
+
+			{topKillers.length > 0 && (
+				<section className={styles.section}>
+					<p className={styles.sectionTitle}>Tueurs en série</p>
+					<ol className={styles.ranking}>
+						{topKillers.map((player, index) => (
+							<li key={player.id} className={styles.rank}>
+								<span className={styles.rankNumber}>
+									{String(index + 1).padStart(2, "0")}
+								</span>
+								<Avatar playerId={player.id} className={styles.smallPhoto} />
+								<span className={styles.rankName}>{player.name}</span>
+								<span className={styles.rankKills}>
+									{kills(player.killCount)}
+								</span>
+							</li>
+						))}
+					</ol>
+
+					{firstKill && (
+						<div className={styles.awards}>
+							<AwardCard
+								title="Lucky Luke"
+								subtitle="Killer le plus rapide"
+								playerId={firstKill.chasseurId}
+								playerName={firstKill.chasseurName}
+							/>
+							<AwardCard
+								title="Premier à tomber"
+								subtitle="Un alibi trop fragile"
+								playerId={firstKill.victimeId}
+								playerName={firstKill.victimeName}
+							/>
+						</div>
+					)}
+				</section>
+			)}
+
+			{results.kills.length > 0 && (
+				<section className={styles.section}>
+					<p className={styles.sectionTitle}>Les missions</p>
+					<ul className={styles.missions}>
+						{results.kills.map((kill) => (
+							<li key={kill.killId} className={styles.mission}>
+								<p className="eyebrow">
+									{kill.chasseurName} → {kill.victimeName}
+								</p>
+								<p>{describe(kill.mission)}</p>
+							</li>
+						))}
+					</ul>
+				</section>
+			)}
 		</main>
 	);
 }

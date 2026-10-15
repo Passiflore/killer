@@ -77,6 +77,7 @@ export interface PlayerResult {
 export interface Results {
 	winners: PlayerResult[];
 	ranking: PlayerResult[];
+	kills: GameEvent[];
 }
 
 export interface CreateGameResponse {

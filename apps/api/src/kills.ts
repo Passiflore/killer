@@ -1,5 +1,11 @@
 import type { DatabaseSync } from "node:sqlite";
-import type { KillStatus, PlayerResult, PlayerStatus, Results } from "shared";
+import type {
+	GameEvent,
+	KillStatus,
+	PlayerResult,
+	PlayerStatus,
+	Results,
+} from "shared";
 import { inTransaction } from "./schema.ts";
 
 const PENDING = "('EN_ATTENTE', 'CONTESTE')";
@@ -184,7 +190,21 @@ export function getResults(db: DatabaseSync): Results {
 	const best = Math.max(...survivors.map((player) => player.killCount));
 	const winners = survivors.filter((player) => player.killCount === best);
 
-	return { winners, ranking };
+	const kills = db
+		.prepare(
+			`SELECT k.id AS killId, c.id AS chasseurId, c.name AS chasseurName,
+			        v.id AS victimeId, v.name AS victimeName, m.text AS mission,
+			        k.resolved_at AS resolvedAt
+			 FROM kills k
+			 JOIN players c ON c.id = k.chasseur_id
+			 JOIN players v ON v.id = k.victime_id
+			 JOIN missions m ON m.id = k.mission_id
+			 WHERE k.status = 'VALIDE'
+			 ORDER BY k.resolved_at`,
+		)
+		.all() as unknown as GameEvent[];
+
+	return { winners, ranking, kills };
 }
 
 export function leaveGame(db: DatabaseSync, playerId: number, now: number): void {

@@ -90,7 +90,7 @@ function App() {
 				/>
 			);
 		}
-		if (game.status === "TERMINEE") return <EndPage />;
+		if (game.status === "TERMINEE") return <EndPage game={game} />;
 		return (
 			<OrgaDashboardPage
 				game={game}
@@ -136,7 +136,7 @@ function App() {
 	}
 
 	if (game?.status === "TERMINEE") {
-		return <EndPage myId={me.id} />;
+		return <EndPage game={game} />;
 	}
 
 	return <LobbyPage me={me} game={game} players={players} />;
