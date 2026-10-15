@@ -125,7 +125,14 @@ function App() {
 		if (me.victimKill) {
 			return <KilledPage kill={me.victimKill} game={game} onMeChange={setMe} />;
 		}
-		return <PlayerPage me={me} players={players} onMeChange={setMe} />;
+		return (
+			<PlayerPage
+				me={me}
+				game={game}
+				players={players}
+				onMeChange={setMe}
+			/>
+		);
 	}
 
 	if (game?.status === "TERMINEE") {
