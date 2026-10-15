@@ -18,7 +18,7 @@ import {
 function setup(): DatabaseSync {
 	const db = createDb(":memory:");
 	db.exec(
-		"INSERT INTO game (id, orga_code, status, started_at) VALUES (1, '1234', 'EN_COURS', 0)",
+		"INSERT INTO game (id, orga_code, code, status, started_at) VALUES (1, '1234', 'K7M4', 'EN_COURS', 0)",
 	);
 	for (let id = 1; id <= 4; id++) {
 		db.prepare("INSERT INTO missions (id, text) VALUES (?, ?)").run(

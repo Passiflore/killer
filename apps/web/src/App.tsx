@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Me } from "shared";
-import "./App.css";
 import JoinPage from "./pages/JoinPage";
+import HomePage from "./pages/HomePage/HomePage";
 import { TOKEN_KEY } from "./storage";
 import OrgaPage from "./pages/OrgaPage";
 import LobbyPage from "./pages/LobbyPage";
@@ -35,6 +35,7 @@ function reloadMe(onFound: (me: Me) => void) {
 
 function App() {
 	const [me, setMe] = useState<Me | null>(null);
+	const [gameCode, setGameCode] = useState<string | null>(null);
 	const { game, players } = useLiveGame();
 
 	const [isChecking, setIsChecking] = useState(
@@ -90,7 +91,16 @@ function App() {
 	}
 
 	if (!me) {
-		return <JoinPage onJoined={setMe} />;
+		if (!gameCode) {
+			return <HomePage onCodeOk={setGameCode} />;
+		}
+		return (
+			<JoinPage
+				code={gameCode}
+				onBack={() => setGameCode(null)}
+				onJoined={setMe}
+			/>
+		);
 	}
 
 	if (game?.status === "EN_COURS") {
@@ -98,9 +108,7 @@ function App() {
 			return <EliminatedPage me={me} />;
 		}
 		if (me.victimKill) {
-			return (
-				<KilledPage kill={me.victimKill} game={game} onMeChange={setMe} />
-			);
+			return <KilledPage kill={me.victimKill} game={game} onMeChange={setMe} />;
 		}
 		return <PlayerPage me={me} players={players} onMeChange={setMe} />;
 	}

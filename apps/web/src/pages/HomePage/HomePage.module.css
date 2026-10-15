@@ -1,0 +1,21 @@
+.logoContainer {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+}
+
+.title {
+	font-family: var(--font-hand);
+	font-size: 98px;
+	line-height: 1;
+	text-transform: uppercase;
+	text-align: center;
+}
+
+.buttons {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin-top: 12px;
+}

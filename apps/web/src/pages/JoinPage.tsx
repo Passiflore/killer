@@ -2,7 +2,15 @@ import { useState } from "react";
 import type { ApiError, JoinResponse, Me } from "shared";
 import { TOKEN_KEY } from "../storage";
 
-function JoinPage({ onJoined }: { onJoined: (me: Me) => void }) {
+function JoinPage({
+	code,
+	onBack,
+	onJoined,
+}: {
+	code: string;
+	onBack: () => void;
+	onJoined: (me: Me) => void;
+}) {
 	const [name, setName] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
@@ -15,7 +23,7 @@ function JoinPage({ onJoined }: { onJoined: (me: Me) => void }) {
 			const response = await fetch("/api/players", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ name }),
+				body: JSON.stringify({ name, code }),
 			});
 			const data = await response.json();
 
@@ -39,18 +47,45 @@ function JoinPage({ onJoined }: { onJoined: (me: Me) => void }) {
 
 	return (
 		<form onSubmit={handleSubmit}>
-			<label htmlFor="name">Ton nom</label>
-			<input
-				id="name"
-				type="text"
-				placeholder="Ex : Léa"
-				value={name}
-				onChange={(event) => setName(event.target.value)}
-			/>
-			<button type="submit" disabled={isLoading}>
-				{isLoading ? "Connexion…" : "Rejoindre"}
-			</button>
-			{error && <p>{error}</p>}
+			<div className="topbar">
+				<button type="button" className="link" onClick={onBack}>
+					← Retour à l'accueil
+				</button>
+				<span className="hint">Code / {code}</span>
+			</div>
+
+			<div>
+				<h1>Rejoindre la partie</h1>
+				<p className="eyebrow">Recrutement / Identité de l'agent</p>
+			</div>
+
+			<div className="field">
+				<label htmlFor="name">Ton nom</label>
+				<input
+					id="name"
+					type="text"
+					placeholder="Ton nom"
+					value={name}
+					onChange={(event) => setName(event.target.value)}
+					autoComplete="off"
+				/>
+			</div>
+
+			<div className="actions">
+				{error && <p className="error">{error}</p>}
+				<p className="hint">
+					{name.trim() === ""
+						? "Identité à confirmer / Agent en attente"
+						: "Identité prête / Agent recruté"}
+				</p>
+				<button
+					className="button"
+					type="submit"
+					disabled={isLoading || name.trim() === ""}
+				>
+					{isLoading ? "Connexion…" : "Rejoindre"}
+				</button>
+			</div>
 		</form>
 	);
 }

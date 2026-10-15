@@ -47,6 +47,7 @@ function OrgaDashboard({
 	onLogout: () => void;
 }) {
 	const [contests, setContests] = useState<Contest[]>([]);
+	const [gameCode, setGameCode] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -62,6 +63,12 @@ function OrgaDashboard({
 		return () => {
 			socket.off("refresh", loadContests);
 		};
+	}, [orgaCode]);
+
+	useEffect(() => {
+		orgaRequest("/api/orga/code", orgaCode, "GET")
+			.then((data) => setGameCode((data as { code: string }).code))
+			.catch(console.error);
 	}, [orgaCode]);
 
 	async function run(path: string) {
@@ -81,6 +88,14 @@ function OrgaDashboard({
 	return (
 		<main>
 			<h1>Admin</h1>
+
+			{gameCode && (
+				<p>
+					Code de la partie : {gameCode}
+					<br />
+					Lien d'invitation : {window.location.origin}/?code={gameCode}
+				</p>
+			)}
 
 			{contests.map((contest) => (
 				<section key={contest.killId}>

@@ -1,7 +1,7 @@
 import express from "express";
 import { Server } from "socket.io";
 import { createServer } from "node:http";
-import { randomUUID } from "node:crypto";
+import { randomInt, randomUUID } from "node:crypto";
 import type {
 	Contest,
 	Game,
@@ -157,6 +157,27 @@ function isOrga(request: express.Request): boolean {
 	return isOrgaCode(request.get("X-Orga-Code"));
 }
 
+const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+function generateGameCode(): string {
+	let code = "";
+	for (let i = 0; i < 4; i++) {
+		code += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
+	}
+	return code;
+}
+
+function isGameCode(code: unknown): boolean {
+	const row = db.prepare("SELECT code FROM game WHERE id = 1").get() as
+		| { code: string }
+		| undefined;
+	return (
+		row !== undefined &&
+		typeof code === "string" &&
+		code.trim().toUpperCase() === row.code
+	);
+}
+
 function isOrgaCode(code: unknown): boolean {
 	const row = db.prepare("SELECT orga_code FROM game WHERE id = 1").get() as
 		| { orga_code: string }
@@ -190,7 +211,10 @@ app.post("/api/game", (request, response) => {
 		return;
 	}
 
-	db.prepare("INSERT INTO game (id, orga_code) VALUES (1, ?)").run(orgaCode);
+	db.prepare("INSERT INTO game (id, orga_code, code) VALUES (1, ?, ?)").run(
+		orgaCode,
+		generateGameCode(),
+	);
 
 	const insertMission = db.prepare("INSERT INTO missions (text) VALUES (?)");
 	for (const text of DEFAULT_MISSIONS) {
@@ -199,6 +223,18 @@ app.post("/api/game", (request, response) => {
 
 	io.emit("game", getGame());
 	response.status(201).json(getGame());
+});
+
+app.post("/api/game/check", (request, response) => {
+	if (!isGameCode(request.body?.code)) {
+		response.status(404).json({ error: "Aucune partie avec ce code." });
+		return;
+	}
+	if (getGame()?.status !== "LOBBY") {
+		response.status(409).json({ error: "La partie a déjà commencé." });
+		return;
+	}
+	response.status(204).end();
 });
 
 // Un joueur rejoint la partie avec un nom.
@@ -211,6 +247,10 @@ app.post("/api/players", (request, response) => {
 		return;
 	}
 
+	if (!isGameCode(request.body?.code)) {
+		response.status(403).json({ error: "Code de partie incorrect." });
+		return;
+	}
 	const game = getGame();
 	if (!game || game.status !== "LOBBY") {
 		response
@@ -365,6 +405,17 @@ app.post("/api/me/leave", (request, response) => {
 });
 
 // L'orga vérifie son code avant d'accéder à son espace.
+app.get("/api/orga/code", (request, response) => {
+	if (!isOrga(request)) {
+		response.status(403).json({ error: "Code orga incorrect." });
+		return;
+	}
+	const row = db.prepare("SELECT code FROM game WHERE id = 1").get() as {
+		code: string;
+	};
+	response.json({ code: row.code });
+});
+
 app.post("/api/orga/login", (request, response) => {
 	if (!isOrga(request)) {
 		response.status(403).json({ error: "Code orga incorrect." });
