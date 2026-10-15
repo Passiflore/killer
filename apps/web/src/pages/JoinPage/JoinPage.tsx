@@ -1,8 +1,7 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import type { ApiError, JoinResponse, Me } from "shared";
 import { TOKEN_KEY } from "../../storage";
-import agentPortrait from "../../assets/AgentPortrait.png";
-import { resizePhoto } from "../../photo";
+import PhotoPicker from "../../components/PhotoPicker";
 import styles from "./JoinPage.module.css";
 
 function JoinPage({
@@ -18,22 +17,12 @@ function JoinPage({
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 	const [photo, setPhoto] = useState<string | null>(null);
-	const fileInput = useRef<HTMLInputElement>(null);
 
 	const isReady = name.trim() !== "" && !error;
 
 	function handleNameChange(value: string) {
 		setName(value);
 		setError(null);
-	}
-
-	async function handlePhoto(file: File | undefined) {
-		if (!file) return;
-		try {
-			setPhoto(await resizePhoto(file));
-		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
-		}
 	}
 
 	async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
@@ -80,42 +69,12 @@ function JoinPage({
 				<p className="eyebrow">Recrutement / Identité de l'agent</p>
 			</div>
 
-			<div className={styles.avatar}>
-				<img
-					src={photo ?? agentPortrait}
-					alt=""
-					className={styles.portrait}
-				/>
-				<input
-					ref={fileInput}
-					type="file"
-					accept="image/*"
-					capture="user"
-					hidden
-					onChange={(event) => handlePhoto(event.target.files?.[0])}
-				/>
-				<button
-					type="button"
-					className={styles.edit}
-					aria-label="Prendre une photo"
-					onClick={() => fileInput.current?.click()}
-				>
-					<svg
-						width="20"
-						height="20"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						strokeWidth="1.5"
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						aria-hidden="true"
-					>
-						<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-						<path d="m15 5 4 4" />
-					</svg>
-				</button>
-			</div>
+			<PhotoPicker
+				photo={photo}
+				onPhoto={setPhoto}
+				onError={setError}
+				className={styles.avatar}
+			/>
 
 			<div className="field">
 				<label htmlFor="name">Ton nom</label>

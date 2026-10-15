@@ -3,9 +3,9 @@ import type { Me } from "shared";
 import JoinPage from "./pages/JoinPage/JoinPage";
 import HomePage from "./pages/HomePage/HomePage";
 import { TOKEN_KEY } from "./storage";
-import OrgaPage from "./pages/OrgaPage";
+import CreateGamePage from "./pages/CreateGamePage/CreateGamePage";
 import LobbyPage from "./pages/LobbyPage";
-import OrgaDashboardPage from "./pages/OrgaDashboardPage";
+import OrgaDashboardPage from "./pages/OrgaDashBoardPage/OrgaDashboardPage";
 import PlayerPage from "./pages/PlayerPage";
 import { useLiveGame } from "./useLiveGame";
 import { socket } from "./socket";
@@ -81,7 +81,15 @@ function App() {
 
 	if (window.location.pathname === "/orga") {
 		if (game === undefined) return <p>Chargement…</p>;
-		if (game === null) return <OrgaPage />;
+		if (game === null) {
+			return (
+				<CreateGamePage
+					onCreated={(created) => {
+						if (created) setMe(created);
+					}}
+				/>
+			);
+		}
 		if (game.status === "TERMINEE") return <EndPage />;
 		return <OrgaDashboardPage game={game} players={players} />;
 	}

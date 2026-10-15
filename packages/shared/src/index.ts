@@ -3,10 +3,13 @@ export type PlayerStatus = "VIVANT" | "ELIMINE";
 export type KillStatus = "EN_ATTENTE" | "VALIDE" | "CONTESTE" | "REJETE";
 
 export interface Game {
+	name: string;
+	orgaName: string;
 	status: GameStatus;
 	autoValidateMinutes: number;
 	startedAt: number | null;
 	endedAt: number | null;
+	endsAt: number | null;
 }
 
 export interface Player {
@@ -61,6 +64,11 @@ export interface PlayerResult {
 export interface Results {
 	winners: PlayerResult[];
 	ranking: PlayerResult[];
+}
+
+export interface CreateGameResponse {
+	orgaCode: string;
+	player: JoinResponse | null;
 }
 
 export interface ApiError {

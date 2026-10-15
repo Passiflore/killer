@@ -11,6 +11,9 @@ export function createDb(path: string): DatabaseSync {
 			                      CHECK (status IN ('LOBBY', 'EN_COURS', 'TERMINEE')),
 			orga_code             TEXT    NOT NULL,
 			code                  TEXT    NOT NULL,
+			name                  TEXT    NOT NULL,
+			orga_name             TEXT    NOT NULL,
+			ends_at               INTEGER,
 			auto_validate_minutes INTEGER NOT NULL DEFAULT 10,
 			started_at            INTEGER,
 			ended_at              INTEGER

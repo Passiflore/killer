@@ -4,6 +4,7 @@ import { createServer } from "node:http";
 import { randomInt, randomUUID } from "node:crypto";
 import type {
 	Contest,
+	CreateGameResponse,
 	Game,
 	JoinResponse,
 	Me,
@@ -48,23 +49,30 @@ app.get("/healthz", (request, response) => {
 function getGame(): Game | null {
 	const row = db
 		.prepare(
-			"SELECT status, auto_validate_minutes, started_at, ended_at FROM game WHERE id = 1",
+			`SELECT name, orga_name, status, auto_validate_minutes, started_at, ended_at, ends_at
+			 FROM game WHERE id = 1`,
 		)
 		.get() as
 		| {
+				name: string;
+				orga_name: string;
 				status: Game["status"];
 				auto_validate_minutes: number;
 				started_at: number | null;
 				ended_at: number | null;
+				ends_at: number | null;
 		  }
 		| undefined;
 
 	if (!row) return null;
 	return {
+		name: row.name,
+		orgaName: row.orga_name,
 		status: row.status,
 		autoValidateMinutes: row.auto_validate_minutes,
 		startedAt: row.started_at,
 		endedAt: row.ended_at,
+		endsAt: row.ends_at,
 	};
 }
 
@@ -160,12 +168,33 @@ function isOrga(request: express.Request): boolean {
 const PHOTO_PREFIX = "data:image/jpeg;base64,";
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
-function generateGameCode(): string {
+function generateCode(length: number): string {
 	let code = "";
-	for (let i = 0; i < 4; i++) {
+	for (let i = 0; i < length; i++) {
 		code += CODE_ALPHABET[randomInt(CODE_ALPHABET.length)];
 	}
 	return code;
+}
+
+function isValidPhoto(photo: unknown): photo is string | null {
+	return (
+		photo === null ||
+		(typeof photo === "string" &&
+			photo.startsWith(PHOTO_PREFIX) &&
+			photo.length <= 500_000)
+	);
+}
+
+function isNameTaken(error: unknown): boolean {
+	return error instanceof Error && error.message.includes("UNIQUE");
+}
+
+function insertPlayer(name: string, photo: string | null): string {
+	const token = randomUUID();
+	db.prepare(
+		"INSERT INTO players (name, token, photo, joined_at) VALUES (?, ?, ?, ?)",
+	).run(name, token, photo, Date.now());
+	return token;
 }
 
 function isGameCode(code: unknown): boolean {
@@ -200,30 +229,80 @@ app.get("/api/game", (request, response) => {
 
 // L'organisateur crée la partie et choisit son code secret.
 app.post("/api/game", (request, response) => {
-	const orgaCode = String(request.body?.orgaCode ?? "").trim();
-	if (orgaCode.length < 4) {
+	const body = request.body ?? {};
+	const name = String(body.name ?? "").trim();
+	const orgaName = String(body.orgaName ?? "").trim();
+	const endsAt = body.endsAt ?? null;
+	const participant = body.participant === true;
+	const playerName = String(body.playerName ?? "").trim();
+	const photo = body.photo ?? null;
+
+	if (name.length === 0 || name.length > 40) {
 		response
 			.status(400)
-			.json({ error: "Le code orga doit faire au moins 4 caractères." });
+			.json({ error: "Le nom de la partie doit faire entre 1 et 40 caractères." });
 		return;
 	}
+	if (orgaName.length === 0 || orgaName.length > 30) {
+		response
+			.status(400)
+			.json({ error: "Ton nom doit faire entre 1 et 30 caractères." });
+		return;
+	}
+	if (endsAt !== null && (typeof endsAt !== "number" || endsAt <= Date.now())) {
+		response.status(400).json({ error: "L'heure de fin doit être à venir." });
+		return;
+	}
+	if (participant && (playerName.length === 0 || playerName.length > 30)) {
+		response
+			.status(400)
+			.json({ error: "Ton nom de joueur doit faire entre 1 et 30 caractères." });
+		return;
+	}
+	if (participant && !isValidPhoto(photo)) {
+		response.status(400).json({ error: "Photo invalide." });
+		return;
+	}
+
+	const customMissions: string[] =
+		!participant && Array.isArray(body.missions)
+			? body.missions
+					.map((mission: unknown) => String(mission).trim())
+					.filter((mission: string) => mission.length > 0)
+			: [];
+	const missions = [...DEFAULT_MISSIONS, ...customMissions];
+
 	if (getGame()) {
 		response.status(409).json({ error: "Une partie existe déjà." });
 		return;
 	}
 
-	db.prepare("INSERT INTO game (id, orga_code, code) VALUES (1, ?, ?)").run(
-		orgaCode,
-		generateGameCode(),
-	);
+	const orgaCode = generateCode(6);
+	let token: string | null = null;
+	inTransaction(db, () => {
+		db.prepare(
+			`INSERT INTO game (id, orga_code, code, name, orga_name, ends_at)
+			 VALUES (1, ?, ?, ?, ?, ?)`,
+		).run(orgaCode, generateCode(4), name, orgaName, endsAt);
 
-	const insertMission = db.prepare("INSERT INTO missions (text) VALUES (?)");
-	for (const text of DEFAULT_MISSIONS) {
-		insertMission.run(text);
-	}
+		const insertMission = db.prepare("INSERT INTO missions (text) VALUES (?)");
+		for (const text of missions) {
+			insertMission.run(text);
+		}
+
+		if (participant) {
+			token = insertPlayer(playerName, photo);
+		}
+	});
 
 	io.emit("game", getGame());
-	response.status(201).json(getGame());
+	io.emit("players", listPlayers());
+
+	const result: CreateGameResponse = {
+		orgaCode,
+		player: token ? { token, me: getMe(token)! } : null,
+	};
+	response.status(201).json(result);
 });
 
 app.get("/api/players/:id/photo", (request, response) => {
@@ -275,24 +354,17 @@ app.post("/api/players", (request, response) => {
 	}
 
 	const photo = request.body?.photo ?? null;
-	if (
-		photo !== null &&
-		(typeof photo !== "string" ||
-			!photo.startsWith(PHOTO_PREFIX) ||
-			photo.length > 500_000)
-	) {
+	if (!isValidPhoto(photo)) {
 		response.status(400).json({ error: "Photo invalide." });
 		return;
 	}
 
-	const token = randomUUID();
+	let token: string;
 	try {
-		db.prepare(
-			"INSERT INTO players (name, token, photo, joined_at) VALUES (?, ?, ?, ?)",
-		).run(name, token, photo, Date.now());
+		token = insertPlayer(name, photo);
 	} catch (error) {
 		// La colonne name est UNIQUE : SQLite refuse un nom déjà pris.
-		if (error instanceof Error && error.message.includes("UNIQUE")) {
+		if (isNameTaken(error)) {
 			response.status(409).json({
 				error: "Ce nom est déjà utilisé par un joueur, rajoute tes initiales",
 			});

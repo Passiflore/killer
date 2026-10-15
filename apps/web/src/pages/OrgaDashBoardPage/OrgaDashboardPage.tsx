@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import type { Contest, Game, Player } from "shared";
-import { orgaRequest } from "../api";
-import { socket } from "../socket";
-import { ORGA_CODE_KEY } from "../storage";
+import { orgaRequest } from "../../api";
+import { socket } from "../../socket";
+import { ORGA_CODE_KEY } from "../../storage";
 
 function OrgaLogin({ onLogin }: { onLogin: (orgaCode: string) => void }) {
 	const [orgaCode, setOrgaCode] = useState("");
@@ -94,6 +94,8 @@ function OrgaDashboard({
 					Code de la partie : {gameCode}
 					<br />
 					Lien d'invitation : {window.location.origin}/?code={gameCode}
+					<br />
+					Code orga (pour te reconnecter ailleurs) : {orgaCode}
 				</p>
 			)}
 

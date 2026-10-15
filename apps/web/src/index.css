@@ -74,6 +74,7 @@ h2,
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 	color: var(--text-soft);
+	margin-bottom: 8px;
 }
 
 .eyebrow {
@@ -178,7 +179,7 @@ button {
 label {
 	display: block;
 	margin-bottom: 8px;
-	font-size: 14px;
+	font-size: 12px;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 	color: var(--text-soft);
@@ -194,7 +195,7 @@ textarea {
 	background: var(--surface);
 	color: var(--text);
 	font-family: var(--font-hand);
-	font-size: 18px;
+	font-size: 16px;
 }
 
 input:focus,
