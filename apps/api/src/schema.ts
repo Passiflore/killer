@@ -20,8 +20,9 @@ export function createDb(path: string): DatabaseSync {
 		);
 
 		CREATE TABLE IF NOT EXISTS missions (
-			id   INTEGER PRIMARY KEY,
-			text TEXT    NOT NULL
+			id     INTEGER PRIMARY KEY,
+			text   TEXT    NOT NULL,
+			custom INTEGER NOT NULL DEFAULT 0
 		);
 
 		CREATE TABLE IF NOT EXISTS players (

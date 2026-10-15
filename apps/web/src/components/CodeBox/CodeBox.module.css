@@ -1,0 +1,28 @@
+.box {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+	height: 65px;
+	padding: 0 16px;
+	border: 1px solid var(--border);
+	background: var(--surface);
+}
+
+.code {
+	margin-top: 4px;
+	font-family: var(--font-hand);
+	font-size: 23px;
+	line-height: 1;
+}
+
+.copy {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--text);
+	font-size: 16px;
+}

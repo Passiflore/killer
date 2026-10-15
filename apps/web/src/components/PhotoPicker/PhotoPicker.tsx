@@ -1,6 +1,6 @@
 import { useRef } from "react";
-import agentPortrait from "../assets/AgentPortrait.png";
-import { resizePhoto } from "../photo";
+import agentPortrait from "../../assets/AgentPortrait.png";
+import { resizePhoto } from "../../photo";
 import styles from "./PhotoPicker.module.css";
 
 function PhotoPicker({

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { Me, Player } from "shared";
-import { postAsPlayer } from "../api";
+import { postAsPlayer } from "../../api";
 
 function PlayerPage({
 	me,

@@ -3,6 +3,7 @@ import type { Contest, Game, Player } from "shared";
 import { orgaRequest } from "../../api";
 import { socket } from "../../socket";
 import { ORGA_CODE_KEY } from "../../storage";
+import AdminLobby from "./AdminLobby";
 
 function OrgaLogin({ onLogin }: { onLogin: (orgaCode: string) => void }) {
 	const [orgaCode, setOrgaCode] = useState("");
@@ -39,11 +40,13 @@ function OrgaDashboard({
 	game,
 	players,
 	orgaCode,
+	isParticipant,
 	onLogout,
 }: {
 	game: Game;
 	players: Player[];
 	orgaCode: string;
+	isParticipant: boolean;
 	onLogout: () => void;
 }) {
 	const [contests, setContests] = useState<Contest[]>([]);
@@ -81,6 +84,18 @@ function OrgaDashboard({
 		} finally {
 			setIsLoading(false);
 		}
+	}
+
+	if (game.status === "LOBBY") {
+		return (
+			<AdminLobby
+				game={game}
+				players={players}
+				orgaCode={orgaCode}
+				gameCode={gameCode}
+				isParticipant={isParticipant}
+			/>
+		);
 	}
 
 	const alivePlayers = players.filter((player) => player.status === "VIVANT");
@@ -134,15 +149,6 @@ function OrgaDashboard({
 				))}
 			</ul>
 
-			{game.status === "LOBBY" && (
-				<button
-					type="button"
-					onClick={() => run("/api/game/start")}
-					disabled={isLoading || players.length < 2}
-				>
-					{isLoading ? "Lancement…" : "Lancer la partie"}
-				</button>
-			)}
 			{game.status === "EN_COURS" && (
 				<button
 					type="button"
@@ -169,9 +175,11 @@ function OrgaDashboard({
 function OrgaDashboardPage({
 	game,
 	players,
+	isParticipant,
 }: {
 	game: Game;
 	players: Player[];
+	isParticipant: boolean;
 }) {
 	const [orgaCode, setOrgaCode] = useState(() =>
 		localStorage.getItem(ORGA_CODE_KEY),
@@ -195,6 +203,7 @@ function OrgaDashboardPage({
 			game={game}
 			players={players}
 			orgaCode={orgaCode}
+			isParticipant={isParticipant}
 			onLogout={logout}
 		/>
 	);

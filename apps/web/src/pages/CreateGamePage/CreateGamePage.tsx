@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ApiError, CreateGameResponse, Me } from "shared";
-import PhotoPicker from "../../components/PhotoPicker";
+import MissionInput from "../../components/MissionInput/MissionInput";
+import PhotoPicker from "../../components/PhotoPicker/PhotoPicker";
 import { ORGA_CODE_KEY, TOKEN_KEY } from "../../storage";
 import styles from "./CreateGamePage.module.css";
 
@@ -23,7 +24,6 @@ function CreateGamePage({ onCreated }: { onCreated: (me: Me | null) => void }) {
 	const [playerName, setPlayerName] = useState<string | null>(null);
 	const [photo, setPhoto] = useState<string | null>(null);
 	const [missions, setMissions] = useState<string[]>([]);
-	const [draft, setDraft] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
 
@@ -32,14 +32,6 @@ function CreateGamePage({ onCreated }: { onCreated: (me: Me | null) => void }) {
 		name.trim() !== "" &&
 		orgaName.trim() !== "" &&
 		(!isParticipant || finalPlayerName.trim() !== "");
-
-	function addMission() {
-		const mission = draft.trim();
-		if (mission) {
-			setMissions([...missions, mission]);
-		}
-		setDraft("");
-	}
 
 	function removeMission(index: number) {
 		setMissions(missions.filter((_, i) => i !== index));
@@ -60,7 +52,7 @@ function CreateGamePage({ onCreated }: { onCreated: (me: Me | null) => void }) {
 					participant: isParticipant,
 					playerName: finalPlayerName,
 					photo,
-					missions: [...missions, draft],
+					missions,
 				}),
 			});
 			const data = await response.json();
@@ -174,41 +166,11 @@ function CreateGamePage({ onCreated }: { onCreated: (me: Me | null) => void }) {
 					</div>
 				</div>
 			) : (
-				<div className="field">
-					<label htmlFor="missions">Rajoute des missions</label>
-					<textarea
-						id="missions"
-						className={styles.missions}
-						placeholder="Rajoute des missions..."
-						value={draft}
-						onChange={(event) => setDraft(event.target.value)}
-						onKeyDown={(event) => {
-							if (event.key === "Enter" && !event.shiftKey) {
-								event.preventDefault();
-								addMission();
-							}
-						}}
-						onBlur={addMission}
-						enterKeyHint="done"
-					/>
-					{missions.length > 0 && (
-						<ul className={styles.chips}>
-							{missions.map((mission, index) => (
-								<li key={`${index}-${mission}`} className={styles.chip}>
-									<span className={styles.chipText}>{mission}</span>
-									<button
-										type="button"
-										className={styles.chipRemove}
-										onClick={() => removeMission(index)}
-										aria-label={`Retirer « ${mission} »`}
-									>
-										×
-									</button>
-								</li>
-							))}
-						</ul>
-					)}
-				</div>
+				<MissionInput
+					missions={missions}
+					onAdd={(mission) => setMissions([...missions, mission])}
+					onRemove={removeMission}
+				/>
 			)}
 
 			<div className="actions">

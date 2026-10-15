@@ -5,6 +5,7 @@ import { randomInt, randomUUID } from "node:crypto";
 import type {
 	Contest,
 	CreateGameResponse,
+	CustomMission,
 	Game,
 	JoinResponse,
 	Me,
@@ -276,8 +277,6 @@ app.post("/api/game", (request, response) => {
 					.map((mission: unknown) => String(mission).trim())
 					.filter((mission: string) => mission.length > 0)
 			: [];
-	const missions = [...DEFAULT_MISSIONS, ...customMissions];
-
 	if (getGame()) {
 		response.status(409).json({ error: "Une partie existe déjà." });
 		return;
@@ -291,9 +290,14 @@ app.post("/api/game", (request, response) => {
 			 VALUES (1, ?, ?, ?, ?, ?)`,
 		).run(orgaCode, generateCode(4), name, orgaName, endsAt);
 
-		const insertMission = db.prepare("INSERT INTO missions (text) VALUES (?)");
-		for (const text of missions) {
-			insertMission.run(text);
+		const insertMission = db.prepare(
+			"INSERT INTO missions (text, custom) VALUES (?, ?)",
+		);
+		for (const text of DEFAULT_MISSIONS) {
+			insertMission.run(text, 0);
+		}
+		for (const text of customMissions) {
+			insertMission.run(text, 1);
 		}
 
 		if (participant) {
@@ -517,6 +521,55 @@ app.get("/api/orga/code", (request, response) => {
 		return;
 	}
 	response.json({ code: gameCode() });
+});
+
+function listCustomMissions(): CustomMission[] {
+	return db
+		.prepare("SELECT id, text FROM missions WHERE custom = 1 ORDER BY id")
+		.all() as unknown as CustomMission[];
+}
+
+app.get("/api/orga/missions", (request, response) => {
+	if (!isOrga(request)) {
+		response.status(403).json({ error: "Code orga incorrect." });
+		return;
+	}
+	response.json(listCustomMissions());
+});
+
+app.post("/api/orga/missions", (request, response) => {
+	if (!isOrga(request)) {
+		response.status(403).json({ error: "Code orga incorrect." });
+		return;
+	}
+	if (getGame()?.status !== "LOBBY") {
+		response.status(409).json({ error: "La partie a déjà commencé." });
+		return;
+	}
+	const text = String(request.body?.text ?? "").trim();
+	if (text.length === 0 || text.length > 200) {
+		response
+			.status(400)
+			.json({ error: "Une mission doit faire entre 1 et 200 caractères." });
+		return;
+	}
+	db.prepare("INSERT INTO missions (text, custom) VALUES (?, 1)").run(text);
+	response.status(201).json(listCustomMissions());
+});
+
+app.delete("/api/orga/missions/:id", (request, response) => {
+	if (!isOrga(request)) {
+		response.status(403).json({ error: "Code orga incorrect." });
+		return;
+	}
+	if (getGame()?.status !== "LOBBY") {
+		response.status(409).json({ error: "La partie a déjà commencé." });
+		return;
+	}
+	db.prepare("DELETE FROM missions WHERE id = ? AND custom = 1").run(
+		Number(request.params.id),
+	);
+	response.json(listCustomMissions());
 });
 
 app.post("/api/orga/login", (request, response) => {

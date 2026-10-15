@@ -1,0 +1,14 @@
+.logo {
+	font-family: var(--font-hand);
+	font-size: 28px;
+	line-height: 1;
+	text-transform: uppercase;
+	margin-top: 16px;
+}
+
+.status {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 12px;
+}

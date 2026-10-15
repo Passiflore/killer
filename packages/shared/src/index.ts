@@ -72,6 +72,11 @@ export interface CreateGameResponse {
 	player: JoinResponse | null;
 }
 
+export interface CustomMission {
+	id: number;
+	text: string;
+}
+
 export interface ApiError {
 	error: string;
 }

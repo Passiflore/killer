@@ -31,7 +31,12 @@ export async function postAsPlayer(path: string): Promise<Me> {
 export function orgaRequest(
 	path: string,
 	orgaCode: string,
-	method: "GET" | "POST" = "POST",
+	method: "GET" | "POST" | "DELETE" = "POST",
+	body?: unknown,
 ): Promise<unknown> {
-	return request(path, { method, headers: { "X-Orga-Code": orgaCode } });
+	return request(path, {
+		method,
+		headers: { "X-Orga-Code": orgaCode, "Content-Type": "application/json" },
+		body: body === undefined ? undefined : JSON.stringify(body),
+	});
 }

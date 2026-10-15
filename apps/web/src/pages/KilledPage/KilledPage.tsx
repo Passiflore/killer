@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Game, Me, PendingKill } from "shared";
-import { postAsPlayer } from "../api";
+import { postAsPlayer } from "../../api";
 
 // Affiche « mm:ss » jusqu'à `until`, mis à jour chaque seconde.
 function Countdown({ until }: { until: number }) {

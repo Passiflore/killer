@@ -1,5 +1,5 @@
 import { useState } from "react";
-import agentPortrait from "../assets/AgentPortrait.png";
+import agentPortrait from "../../assets/AgentPortrait.png";
 
 function Avatar({
 	playerId,

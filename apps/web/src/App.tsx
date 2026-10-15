@@ -6,12 +6,12 @@ import { TOKEN_KEY } from "./storage";
 import CreateGamePage from "./pages/CreateGamePage/CreateGamePage";
 import LobbyPage from "./pages/LobbyPage/LobbyPage";
 import OrgaDashboardPage from "./pages/OrgaDashBoardPage/OrgaDashboardPage";
-import PlayerPage from "./pages/PlayerPage";
+import PlayerPage from "./pages/PlayerPage/PlayerPage";
 import { useLiveGame } from "./useLiveGame";
 import { socket } from "./socket";
-import KilledPage from "./pages/KilledPage";
-import EliminatedPage from "./pages/EliminatedPage";
-import EndPage from "./pages/EndPage";
+import KilledPage from "./pages/KilledPage/KilledPage";
+import EliminatedPage from "./pages/EliminatedPage/EliminatedPage";
+import EndPage from "./pages/EndPage/EndPage";
 
 // Renvoie le joueur, ou null si le serveur ne reconnaît pas le token.
 async function fetchMe(token: string): Promise<Me | null> {
@@ -91,7 +91,13 @@ function App() {
 			);
 		}
 		if (game.status === "TERMINEE") return <EndPage />;
-		return <OrgaDashboardPage game={game} players={players} />;
+		return (
+			<OrgaDashboardPage
+				game={game}
+				players={players}
+				isParticipant={me !== null}
+			/>
+		);
 	}
 
 	if (isChecking) {
@@ -105,6 +111,7 @@ function App() {
 		return (
 			<JoinPage
 				code={gameCode}
+				gameName={game?.name}
 				onBack={() => setGameCode(null)}
 				onJoined={setMe}
 			/>

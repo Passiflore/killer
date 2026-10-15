@@ -1,15 +1,17 @@
 import { useState } from "react";
 import type { ApiError, JoinResponse, Me } from "shared";
 import { TOKEN_KEY } from "../../storage";
-import PhotoPicker from "../../components/PhotoPicker";
+import PhotoPicker from "../../components/PhotoPicker/PhotoPicker";
 import styles from "./JoinPage.module.css";
 
 function JoinPage({
 	code,
+	gameName,
 	onBack,
 	onJoined,
 }: {
 	code: string;
+	gameName: string | undefined;
 	onBack: () => void;
 	onJoined: (me: Me) => void;
 }) {
@@ -65,7 +67,7 @@ function JoinPage({
 			</div>
 
 			<div className={styles.titleContainer}>
-				<h1>Rejoindre la partie</h1>
+				<h1>{gameName}</h1>
 				<p className="eyebrow">Recrutement / Identité de l'agent</p>
 			</div>
 
