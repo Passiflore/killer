@@ -84,7 +84,7 @@ h2,
 }
 
 .hint {
-	font-size: 13px;
+	font-size: 12px;
 	letter-spacing: 0.08em;
 	text-transform: uppercase;
 	color: var(--text-muted);
@@ -135,7 +135,7 @@ button {
 	background: var(--red);
 	color: var(--text);
 	font-family: var(--font-hand);
-	font-size: 18px;
+	font-size: 14px;
 	text-transform: uppercase;
 }
 
@@ -160,7 +160,7 @@ button {
 	background: none;
 	color: var(--text);
 	font-family: var(--font-mono);
-	font-size: 16px;
+	font-size: 14px;
 	text-decoration: none;
 }
 
@@ -214,6 +214,16 @@ textarea::placeholder {
 }
 
 .error {
+	color: var(--red);
+}
+
+.field .error {
+	margin-top: 8px;
+}
+
+input[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+	border-color: var(--red);
 	color: var(--red);
 }
 

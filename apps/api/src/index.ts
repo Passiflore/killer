@@ -267,7 +267,9 @@ app.post("/api/players", (request, response) => {
 	} catch (error) {
 		// La colonne name est UNIQUE : SQLite refuse un nom déjà pris.
 		if (error instanceof Error && error.message.includes("UNIQUE")) {
-			response.status(409).json({ error: "Ce nom est déjà pris." });
+			response.status(409).json({
+				error: "Ce nom est déjà utilisé par un joueur, rajoute tes initiales",
+			});
 			return;
 		}
 		throw error;

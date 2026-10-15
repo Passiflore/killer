@@ -1,6 +1,8 @@
 import { useState } from "react";
 import type { ApiError, JoinResponse, Me } from "shared";
-import { TOKEN_KEY } from "../storage";
+import { TOKEN_KEY } from "../../storage";
+import agentPortrait from "../../assets/AgentPortrait.png";
+import styles from "./JoinPage.module.css";
 
 function JoinPage({
 	code,
@@ -14,6 +16,13 @@ function JoinPage({
 	const [name, setName] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+
+	const isReady = name.trim() !== "" && !error;
+
+	function handleNameChange(value: string) {
+		setName(value);
+		setError(null);
+	}
 
 	async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
 		e.preventDefault();
@@ -54,9 +63,33 @@ function JoinPage({
 				<span className="hint">Code / {code}</span>
 			</div>
 
-			<div>
+			<div className={styles.titleContainer}>
 				<h1>Rejoindre la partie</h1>
 				<p className="eyebrow">Recrutement / Identité de l'agent</p>
+			</div>
+
+			<div className={styles.avatar}>
+				<img src={agentPortrait} alt="" className={styles.portrait} />
+				<button
+					type="button"
+					className={styles.edit}
+					aria-label="Prendre une photo"
+				>
+					<svg
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						strokeWidth="1.5"
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+						<path d="m15 5 4 4" />
+					</svg>
+				</button>
 			</div>
 
 			<div className="field">
@@ -66,22 +99,28 @@ function JoinPage({
 					type="text"
 					placeholder="Ton nom"
 					value={name}
-					onChange={(event) => setName(event.target.value)}
+					onChange={(event) => handleNameChange(event.target.value)}
 					autoComplete="off"
+					aria-invalid={error !== null}
+					aria-describedby={error ? "name-error" : undefined}
 				/>
+				{error && (
+					<p id="name-error" className={styles.error}>
+						{error}
+					</p>
+				)}
 			</div>
 
 			<div className="actions">
-				{error && <p className="error">{error}</p>}
 				<p className="hint">
-					{name.trim() === ""
-						? "Identité à confirmer / Agent en attente"
-						: "Identité prête / Agent recruté"}
+					{isReady
+						? "Identité prête / Agent recruté"
+						: "Identité à confirmer / Agent en attente"}
 				</p>
 				<button
 					className="button"
 					type="submit"
-					disabled={isLoading || name.trim() === ""}
+					disabled={isLoading || !isReady}
 				>
 					{isLoading ? "Connexion…" : "Rejoindre"}
 				</button>

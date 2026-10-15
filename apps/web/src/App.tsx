@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Me } from "shared";
-import JoinPage from "./pages/JoinPage";
+import JoinPage from "./pages/JoinPage/JoinPage";
 import HomePage from "./pages/HomePage/HomePage";
 import { TOKEN_KEY } from "./storage";
 import OrgaPage from "./pages/OrgaPage";
