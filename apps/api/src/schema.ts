@@ -29,6 +29,7 @@ export function createDb(path: string): DatabaseSync {
 			           CHECK (status IN ('VIVANT', 'ELIMINE')),
 			target_id  INTEGER REFERENCES players(id),
 			mission_id INTEGER REFERENCES missions(id),
+			photo      TEXT,
 			joined_at  INTEGER NOT NULL
 		);
 

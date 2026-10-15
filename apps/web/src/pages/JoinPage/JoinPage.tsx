@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { ApiError, JoinResponse, Me } from "shared";
 import { TOKEN_KEY } from "../../storage";
 import agentPortrait from "../../assets/AgentPortrait.png";
+import { resizePhoto } from "../../photo";
 import styles from "./JoinPage.module.css";
 
 function JoinPage({
@@ -16,12 +17,23 @@ function JoinPage({
 	const [name, setName] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [photo, setPhoto] = useState<string | null>(null);
+	const fileInput = useRef<HTMLInputElement>(null);
 
 	const isReady = name.trim() !== "" && !error;
 
 	function handleNameChange(value: string) {
 		setName(value);
 		setError(null);
+	}
+
+	async function handlePhoto(file: File | undefined) {
+		if (!file) return;
+		try {
+			setPhoto(await resizePhoto(file));
+		} catch (err) {
+			setError(err instanceof Error ? err.message : String(err));
+		}
 	}
 
 	async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
@@ -32,7 +44,7 @@ function JoinPage({
 			const response = await fetch("/api/players", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ name, code }),
+				body: JSON.stringify({ name, code, photo }),
 			});
 			const data = await response.json();
 
@@ -69,11 +81,24 @@ function JoinPage({
 			</div>
 
 			<div className={styles.avatar}>
-				<img src={agentPortrait} alt="" className={styles.portrait} />
+				<img
+					src={photo ?? agentPortrait}
+					alt=""
+					className={styles.portrait}
+				/>
+				<input
+					ref={fileInput}
+					type="file"
+					accept="image/*"
+					capture="user"
+					hidden
+					onChange={(event) => handlePhoto(event.target.files?.[0])}
+				/>
 				<button
 					type="button"
 					className={styles.edit}
 					aria-label="Prendre une photo"
+					onClick={() => fileInput.current?.click()}
 				>
 					<svg
 						width="20"

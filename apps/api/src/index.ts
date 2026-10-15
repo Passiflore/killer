@@ -39,7 +39,7 @@ io.on("connection", (socket) => {
 	socket.emit("game", getGame());
 });
 
-app.use(express.json());
+app.use(express.json({ limit: "1mb" }));
 
 app.get("/healthz", (request, response) => {
 	response.json({ ok: true });
@@ -157,6 +157,7 @@ function isOrga(request: express.Request): boolean {
 	return isOrgaCode(request.get("X-Orga-Code"));
 }
 
+const PHOTO_PREFIX = "data:image/jpeg;base64,";
 const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 function generateGameCode(): string {
@@ -225,6 +226,20 @@ app.post("/api/game", (request, response) => {
 	response.status(201).json(getGame());
 });
 
+app.get("/api/players/:id/photo", (request, response) => {
+	const row = db
+		.prepare("SELECT photo FROM players WHERE id = ?")
+		.get(Number(request.params.id)) as { photo: string | null } | undefined;
+	if (!row?.photo) {
+		response.status(404).end();
+		return;
+	}
+	response
+		.type("jpeg")
+		.set("Cache-Control", "no-cache")
+		.send(Buffer.from(row.photo.slice(PHOTO_PREFIX.length), "base64"));
+});
+
 app.post("/api/game/check", (request, response) => {
 	if (!isGameCode(request.body?.code)) {
 		response.status(404).json({ error: "Aucune partie avec ce code." });
@@ -259,11 +274,22 @@ app.post("/api/players", (request, response) => {
 		return;
 	}
 
+	const photo = request.body?.photo ?? null;
+	if (
+		photo !== null &&
+		(typeof photo !== "string" ||
+			!photo.startsWith(PHOTO_PREFIX) ||
+			photo.length > 500_000)
+	) {
+		response.status(400).json({ error: "Photo invalide." });
+		return;
+	}
+
 	const token = randomUUID();
 	try {
 		db.prepare(
-			"INSERT INTO players (name, token, joined_at) VALUES (?, ?, ?)",
-		).run(name, token, Date.now());
+			"INSERT INTO players (name, token, photo, joined_at) VALUES (?, ?, ?, ?)",
+		).run(name, token, photo, Date.now());
 	} catch (error) {
 		// La colonne name est UNIQUE : SQLite refuse un nom déjà pris.
 		if (error instanceof Error && error.message.includes("UNIQUE")) {
