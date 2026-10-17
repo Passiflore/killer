@@ -58,9 +58,9 @@ function PlayerPage({
 	const [seenTargetId, setSeenTargetId] = useState(me.target?.id);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
-	const [confirming, setConfirming] = useState<"kill" | "leave" | null>(
-		null,
-	);
+	const [confirming, setConfirming] = useState<
+		"kill" | "leave" | "mission" | null
+	>(null);
 
 	const alivePlayers = players.filter((player) => player.status === "VIVANT");
 	const isOrga = localStorage.getItem(ORGA_CODE_KEY) !== null;
@@ -82,6 +82,20 @@ function PlayerPage({
 		setIsLoading(true);
 		try {
 			onMeChange(await postAsPlayer("/api/kills"));
+		} catch (err) {
+			setError(err instanceof Error ? err.message : String(err));
+		} finally {
+			setIsLoading(false);
+		}
+	}
+
+	async function handleChangeMission() {
+		setConfirming(null);
+		setError(null);
+		setIsLoading(true);
+		try {
+			onMeChange(await postAsPlayer("/api/me/mission"));
+			setShowMission(true);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : String(err));
 		} finally {
@@ -181,6 +195,16 @@ function PlayerPage({
 						J'ai killé
 					</button>
 				)}
+				{me.canChangeMission && (
+					<button
+						type="button"
+						className={styles.leave}
+						onClick={() => setConfirming("mission")}
+						disabled={isLoading || me.huntingKill !== null}
+					>
+						Changer de mission
+					</button>
+				)}
 				<button type="button" className={styles.leave} onClick={() => setConfirming("leave")}>
 					Quitter la partie
 				</button>
@@ -193,6 +217,17 @@ function PlayerPage({
 					confirmLabel="Confirmer et killer"
 					isLoading={isLoading}
 					onConfirm={handleKill}
+					onCancel={() => setConfirming(null)}
+				/>
+			)}
+			{confirming === "mission" && (
+				<ConfirmModal
+					tag="Mission"
+					title="Changer de mission ?"
+					detail="Tu reçois une nouvelle mission au hasard. Tu ne pourras le faire qu'une seule fois."
+					confirmLabel="Confirmer et changer"
+					isLoading={isLoading}
+					onConfirm={handleChangeMission}
 					onCancel={() => setConfirming(null)}
 				/>
 			)}

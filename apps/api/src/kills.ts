@@ -207,6 +207,47 @@ export function getResults(db: DatabaseSync): Results {
 	return { winners, ranking, kills };
 }
 
+// Nombre de changements de mission autorisés par joueur.
+export const MAX_MISSION_CHANGES = 1;
+
+export function changeMission(db: DatabaseSync, playerId: number): void {
+	const player = db
+		.prepare("SELECT status, mission_id, mission_changes FROM players WHERE id = ?")
+		.get(playerId) as
+		| { status: PlayerStatus; mission_id: number | null; mission_changes: number }
+		| undefined;
+	if (!player || player.status !== "VIVANT" || player.mission_id === null) {
+		throw new Error("Tu ne peux pas changer de mission.");
+	}
+	if (player.mission_changes >= MAX_MISSION_CHANGES) {
+		throw new Error("Tu as déjà changé de mission.");
+	}
+	// Le kill en cours garde la mission d'origine : on attend qu'il soit réglé.
+	if (isInPendingKill(db, playerId)) {
+		throw new Error("Un kill te concerne déjà, attends qu'il soit réglé.");
+	}
+
+	// De préférence une mission que personne n'a en ce moment, sinon n'importe quelle autre.
+	const next = (db
+		.prepare(
+			`SELECT id FROM missions
+			 WHERE id NOT IN (SELECT mission_id FROM players
+			                  WHERE status = 'VIVANT' AND mission_id IS NOT NULL)
+			 ORDER BY RANDOM() LIMIT 1`,
+		)
+		.get() ??
+		db
+			.prepare("SELECT id FROM missions WHERE id != ? ORDER BY RANDOM() LIMIT 1")
+			.get(player.mission_id)) as { id: number } | undefined;
+	if (!next) {
+		throw new Error("Aucune autre mission disponible.");
+	}
+
+	db.prepare(
+		"UPDATE players SET mission_id = ?, mission_changes = mission_changes + 1 WHERE id = ?",
+	).run(next.id, playerId);
+}
+
 export function leaveGame(db: DatabaseSync, playerId: number, now: number): void {
 	const player = getPlayer(db, playerId);
 	if (!player || player.status !== "VIVANT") {

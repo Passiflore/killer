@@ -122,3 +122,8 @@
 	font-size: 15px;
 	text-decoration: underline;
 }
+
+.leave:disabled {
+	opacity: 0.4;
+	cursor: default;
+}

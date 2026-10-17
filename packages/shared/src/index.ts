@@ -28,6 +28,7 @@ export interface Me extends Player {
 	target: { id: number; name: string } | null;
 	mission: string | null;
 	killCount: number;
+	canChangeMission: boolean;
 	huntingKill: PendingKill | null;
 	// Côté victime, on donne aussi le nom du chasseur (« Agent X déclare avoir réussi… »).
 	victimKill: (PendingKill & { chasseurName: string }) | null;

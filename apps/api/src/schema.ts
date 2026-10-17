@@ -35,7 +35,8 @@ export function createDb(path: string): DatabaseSync {
 			target_id  INTEGER REFERENCES players(id),
 			mission_id INTEGER REFERENCES missions(id),
 			photo      TEXT,
-			joined_at  INTEGER NOT NULL
+			joined_at  INTEGER NOT NULL,
+			mission_changes INTEGER NOT NULL DEFAULT 0
 		);
 
 		CREATE TABLE IF NOT EXISTS kills (
@@ -49,6 +50,12 @@ export function createDb(path: string): DatabaseSync {
 			resolved_at INTEGER
 		);
 	`);
+
+	// Base créée avant l'ajout de la colonne : on la rajoute (la prod a déjà une base).
+	const columns = db.prepare("PRAGMA table_info(players)").all() as { name: string }[];
+	if (!columns.some((column) => column.name === "mission_changes")) {
+		db.exec("ALTER TABLE players ADD COLUMN mission_changes INTEGER NOT NULL DEFAULT 0");
+	}
 	return db;
 }
 

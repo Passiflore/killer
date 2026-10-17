@@ -23,12 +23,14 @@ import { drawCycle, drawMissions } from "./draw.ts";
 import { inTransaction } from "./schema.ts";
 import {
 	autoValidateExpiredKills,
+	changeMission,
 	contestKill,
 	declareKill,
 	endGame,
 	getKill,
 	getResults,
 	leaveGame,
+	MAX_MISSION_CHANGES,
 	rejectKill,
 	validateKill,
 	whyCannotDeclareKill,
@@ -83,7 +85,7 @@ function getGame(): Game | null {
 function getMe(token: string): Me | null {
 	const row = db
 		.prepare(
-			`SELECT p.id, p.name, p.status,
+			`SELECT p.id, p.name, p.status, p.mission_changes,
 			        t.id AS target_id, t.name AS target_name,
 			        m.text AS mission
 			 FROM players p
@@ -96,6 +98,7 @@ function getMe(token: string): Me | null {
 				id: number;
 				name: string;
 				status: PlayerStatus;
+				mission_changes: number;
 				target_id: number | null;
 				target_name: string | null;
 				mission: string | null;
@@ -129,6 +132,7 @@ function getMe(token: string): Me | null {
 				: null,
 		mission: alive ? row.mission : null,
 		killCount,
+		canChangeMission: alive && row.mission_changes < MAX_MISSION_CHANGES,
 		huntingKill: alive ? pendingKill("chasseur_id", row.id) : null,
 		victimKill: alive ? victimKill(row.id) : null,
 		eliminatedBy: killer?.name ?? null,
@@ -512,6 +516,27 @@ app.post("/api/kills/:id/:action", (request, response) => {
 	}
 
 	broadcastChange();
+	response.json(getMe(token!));
+});
+
+// Le joueur échange sa mission contre une autre (nombre de fois limité).
+app.post("/api/me/mission", (request, response) => {
+	const token = tokenFrom(request);
+	const me = token ? getMe(token) : null;
+	if (!me) {
+		response.status(401).json({ error: "Joueur inconnu." });
+		return;
+	}
+	if (getGame()?.status !== "EN_COURS") {
+		response.status(409).json({ error: "La partie n'est pas en cours." });
+		return;
+	}
+	try {
+		changeMission(db, me.id);
+	} catch (err) {
+		response.status(409).json({ error: (err as Error).message });
+		return;
+	}
 	response.json(getMe(token!));
 });
 

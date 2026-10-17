@@ -4,6 +4,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { createDb } from "./schema.ts";
 import {
 	autoValidateExpiredKills,
+	changeMission,
 	contestKill,
 	declareKill,
 	endGame,
@@ -287,4 +288,36 @@ test("abandon : impossible pour un joueur déjà éliminé", () => {
 	leaveGame(db, 2, 0);
 
 	assert.throws(() => leaveGame(db, 2, 0));
+});
+
+test("changer de mission : prend une mission que personne n'a", () => {
+	const db = setup();
+	db.prepare("INSERT INTO missions (id, text) VALUES (5, 'mission 5')").run();
+	changeMission(db, 1);
+
+	assert.equal(player(db, 1).mission_id, 5);
+});
+
+test("changer de mission : une seule fois par joueur", () => {
+	const db = setup();
+	db.prepare("INSERT INTO missions (id, text) VALUES (5, 'mission 5'), (6, 'mission 6')").run();
+	changeMission(db, 1);
+
+	assert.throws(() => changeMission(db, 1), /déjà changé/);
+});
+
+test("changer de mission : impossible pendant un kill en cours", () => {
+	const db = setup();
+	db.prepare("INSERT INTO missions (id, text) VALUES (5, 'mission 5')").run();
+	declareKill(db, 1, 0);
+
+	assert.throws(() => changeMission(db, 1), /kill/);
+	assert.throws(() => changeMission(db, 2), /kill/);
+});
+
+test("changer de mission : sans mission libre, en prend une autre que la sienne", () => {
+	const db = setup();
+	changeMission(db, 1);
+
+	assert.notEqual(player(db, 1).mission_id, 1);
 });
