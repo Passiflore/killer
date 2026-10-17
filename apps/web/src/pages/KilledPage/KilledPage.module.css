@@ -23,6 +23,8 @@
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
+	/* 32px + les 16px d'écart de <main> = 48px avant le timer */
+	margin-bottom: 32px;
 }
 
 .title {
