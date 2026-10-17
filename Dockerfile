@@ -1,6 +1,6 @@
 FROM node:25-slim
 
-RUN corepack enable
+RUN npm install -g pnpm@9.12.2
 WORKDIR /app
 
 # Dépendances d'abord (mises en cache tant que le lockfile ne change pas)
