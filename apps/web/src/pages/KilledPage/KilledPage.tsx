@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Game, Me, Player } from "shared";
 import { postAsPlayer } from "../../api";
+import SpyArgument from "../../assets/SpyArgument";
 import SpyKilled from "../../assets/SpyKilled";
 import BrandBar from "../../components/BrandBar/BrandBar";
 import Chrono from "../../components/Chrono/Chrono";
@@ -67,47 +68,56 @@ function KilledPage({
 			<p className="eyebrow">Rapport d'incident / Échec de la mission</p>
 
 			<div className={styles.illustration}>
-				<SpyKilled />
+				{isContested ? <SpyArgument /> : <SpyKilled />}
 			</div>
 
 			<div className={styles.text}>
 				<p className={styles.title}>
-					{isContested ? "Contestation en cours" : "Tu t'es fait kill"}
+					{isContested ? (
+						<>
+							Contestation
+							<br />
+							en cours
+						</>
+					) : (
+						"Tu t'es fait kill"
+					)}
 				</p>
 				<p className={styles.detail}>
 					{isContested
-						? "L'organisateur va trancher. Patiente un instant."
+						? "L'organisateur va trancher. Les actions sont désactivées en attendant."
 						: `Agent ${kill.chasseurName} déclare avoir réussi sa mission. Tu reconnais le piège ou tu contestes ?`}
 				</p>
 			</div>
 
-			{!isContested && (
-				<div className="actions">
+			<div className="actions">
+				{/* Un kill contesté n'est jamais validé automatiquement : pas de timer. */}
+				{!isContested && (
 					<div>
 						<p className={styles.countdown}>
 							<Countdown until={autoValidateAt} />
 						</p>
 						<p className={styles.detail}>avant validation auto</p>
 					</div>
-					{error && <p className="error">{error}</p>}
-					<button
-						type="button"
-						className="button"
-						onClick={() => answer("confirm")}
-						disabled={isLoading}
-					>
-						Je me suis fait avoir
-					</button>
-					<button
-						type="button"
-						className="button secondary"
-						onClick={() => answer("contest")}
-						disabled={isLoading}
-					>
-						Contester
-					</button>
-				</div>
-			)}
+				)}
+				{error && <p className="error">{error}</p>}
+				<button
+					type="button"
+					className="button"
+					onClick={() => answer("confirm")}
+					disabled={isContested || isLoading}
+				>
+					Je me suis fait avoir
+				</button>
+				<button
+					type="button"
+					className="button secondary"
+					onClick={() => answer("contest")}
+					disabled={isContested || isLoading}
+				>
+					Contester
+				</button>
+			</div>
 		</main>
 	);
 }
