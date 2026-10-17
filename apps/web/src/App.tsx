@@ -36,6 +36,8 @@ function reloadMe(onFound: (me: Me) => void) {
 function App() {
 	const [me, setMe] = useState<Me | null>(null);
 	const [gameCode, setGameCode] = useState<string | null>(null);
+	// Change à chaque création de partie pour recharger l'espace orga (voir plus bas).
+	const [orgaKey, setOrgaKey] = useState(0);
 	const { game, players } = useLiveGame();
 
 	const [isChecking, setIsChecking] = useState(
@@ -100,13 +102,17 @@ function App() {
 				<CreateGamePage
 					onCreated={(created) => {
 						if (created) setMe(created);
+						setOrgaKey((key) => key + 1);
 					}}
 				/>
 			);
 		}
 		if (game.status === "TERMINEE") return <EndPage game={game} />;
 		return (
+			// Le socket annonce la partie avant que la réponse HTTP n'apporte le code orga :
+			// la `key` force l'espace orga à relire le code une fois qu'il est enregistré.
 			<OrgaDashboardPage
+				key={orgaKey}
 				game={game}
 				players={players}
 				isParticipant={me !== null}
