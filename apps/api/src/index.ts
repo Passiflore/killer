@@ -130,7 +130,7 @@ function getMe(token: string): Me | null {
 		mission: alive ? row.mission : null,
 		killCount,
 		huntingKill: alive ? pendingKill("chasseur_id", row.id) : null,
-		victimKill: alive ? pendingKill("victime_id", row.id) : null,
+		victimKill: alive ? victimKill(row.id) : null,
 		eliminatedBy: killer?.name ?? null,
 		gameCode: gameCode(),
 	};
@@ -151,6 +151,19 @@ function pendingKill(
 	return row
 		? { id: row.id, status: row.status, declaredAt: row.declared_at }
 		: null;
+}
+
+function victimKill(playerId: number): Me["victimKill"] {
+	const kill = pendingKill("victime_id", playerId);
+	if (!kill) return null;
+	const row = db
+		.prepare(
+			`SELECT players.name FROM kills
+			 JOIN players ON players.id = kills.chasseur_id
+			 WHERE kills.id = ?`,
+		)
+		.get(kill.id) as { name: string };
+	return { ...kill, chasseurName: row.name };
 }
 
 function broadcastChange() {

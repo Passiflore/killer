@@ -123,7 +123,14 @@ function App() {
 			return <EliminatedPage me={me} />;
 		}
 		if (me.victimKill) {
-			return <KilledPage kill={me.victimKill} game={game} onMeChange={setMe} />;
+			return (
+				<KilledPage
+					kill={me.victimKill}
+					game={game}
+					players={players}
+					onMeChange={setMe}
+				/>
+			);
 		}
 		return (
 			<PlayerPage

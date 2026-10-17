@@ -29,7 +29,8 @@ export interface Me extends Player {
 	mission: string | null;
 	killCount: number;
 	huntingKill: PendingKill | null;
-	victimKill: PendingKill | null;
+	// Côté victime, on donne aussi le nom du chasseur (« Agent X déclare avoir réussi… »).
+	victimKill: (PendingKill & { chasseurName: string }) | null;
 	eliminatedBy: string | null;
 	gameCode: string;
 }
