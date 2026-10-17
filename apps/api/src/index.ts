@@ -727,6 +727,26 @@ app.post("/api/orga/end", (request, response) => {
 	response.status(204).end();
 });
 
+// Une fois la partie terminée, l'orga efface tout pour pouvoir en recréer une.
+app.post("/api/orga/reset", (request, response) => {
+	if (!isOrga(request)) {
+		response.status(403).json({ error: "Code orga incorrect." });
+		return;
+	}
+	if (getGame()?.status !== "TERMINEE") {
+		response.status(409).json({ error: "La partie n'est pas terminée." });
+		return;
+	}
+	inTransaction(db, () => {
+		db.exec("DELETE FROM kills");
+		db.exec("DELETE FROM players");
+		db.exec("DELETE FROM missions");
+		db.exec("DELETE FROM game");
+	});
+	broadcastChange();
+	response.status(204).end();
+});
+
 app.get("/api/results", (request, response) => {
 	if (getGame()?.status !== "TERMINEE") {
 		response.status(409).json({ error: "La partie n'est pas terminée." });

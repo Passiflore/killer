@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Me } from "shared";
+import type { Game, Me } from "shared";
 import JoinPage from "./pages/JoinPage/JoinPage";
 import HomePage from "./pages/HomePage/HomePage";
 import { TOKEN_KEY } from "./storage";
@@ -69,6 +69,20 @@ function App() {
 	useEffect(() => {
 		if (gameStatus === "EN_COURS") reloadMe(setMe);
 	}, [gameStatus]);
+
+	// Plus de partie (l'orga a tout effacé) : le badge de ce téléphone ne vaut plus rien.
+	useEffect(() => {
+		const onGame = (next: Game | null) => {
+			if (next === null) {
+				localStorage.removeItem(TOKEN_KEY);
+				setMe(null);
+			}
+		};
+		socket.on("game", onGame);
+		return () => {
+			socket.off("game", onGame);
+		};
+	}, []);
 
 	// Après chaque kill, le serveur envoie « refresh » : on redemande SES infos.
 	useEffect(() => {

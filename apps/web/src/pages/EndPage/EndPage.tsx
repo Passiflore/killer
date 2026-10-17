@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import type { Game, PlayerResult, Results } from "shared";
+import { orgaRequest } from "../../api";
 import EndGame from "../../assets/EndGame";
 import Avatar from "../../components/Avatar/Avatar";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
+import { ORGA_CODE_KEY, TOKEN_KEY } from "../../storage";
 import styles from "./EndPage.module.css";
 
 function duration(game: Game): string {
@@ -49,6 +52,27 @@ function AwardCard({
 
 function EndPage({ game }: { game: Game }) {
 	const [results, setResults] = useState<Results | null>(null);
+	const [isConfirming, setIsConfirming] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
+	const orgaCode = localStorage.getItem(ORGA_CODE_KEY);
+
+	// L'orga efface la partie terminée, puis repart sur le formulaire de création.
+	async function reset() {
+		if (!orgaCode) return;
+		setError(null);
+		setIsLoading(true);
+		try {
+			await orgaRequest("/api/orga/reset", orgaCode);
+			localStorage.removeItem(ORGA_CODE_KEY);
+			localStorage.removeItem(TOKEN_KEY);
+			window.location.href = "/orga";
+		} catch (err) {
+			setError(err instanceof Error ? err.message : String(err));
+			setIsLoading(false);
+			setIsConfirming(false);
+		}
+	}
 
 	useEffect(() => {
 		fetch("/api/results")
@@ -158,6 +182,31 @@ function EndPage({ game }: { game: Game }) {
 						))}
 					</ul>
 				</section>
+			)}
+
+			{orgaCode && (
+				<div className="actions">
+					{error && <p className="error">{error}</p>}
+					<button
+						type="button"
+						className="button"
+						onClick={() => setIsConfirming(true)}
+					>
+						Nouvelle partie
+					</button>
+				</div>
+			)}
+
+			{isConfirming && (
+				<ConfirmModal
+					tag="Nouvelle partie"
+					title="Effacer cette partie ?"
+					detail="Joueurs, kills et résultats seront effacés pour tout le monde."
+					confirmLabel="Confirmer et effacer"
+					isLoading={isLoading}
+					onConfirm={reset}
+					onCancel={() => setIsConfirming(false)}
+				/>
 			)}
 		</main>
 	);
