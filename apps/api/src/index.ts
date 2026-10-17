@@ -2,6 +2,8 @@ import express from "express";
 import { Server } from "socket.io";
 import { createServer } from "node:http";
 import { randomInt, randomUUID } from "node:crypto";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type {
 	Contest,
 	CreateGameResponse,
@@ -732,6 +734,14 @@ setInterval(() => {
 		broadcastChange();
 	}
 }, 10_000);
+
+// En prod, le serveur sert aussi le front buildé (même domaine : pas de CORS).
+// Toute route inconnue renvoie index.html pour que le front gère la navigation.
+const webDist = fileURLToPath(new URL("../../web/dist", import.meta.url));
+app.use(express.static(webDist));
+app.get("/{*splat}", (request, response) => {
+	response.sendFile(join(webDist, "index.html"));
+});
 
 httpServer.listen(port, () => {
 	console.log(`Serveur prêt sur http://localhost:${port}`);
