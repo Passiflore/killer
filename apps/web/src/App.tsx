@@ -120,7 +120,7 @@ function App() {
 
 	if (game?.status === "EN_COURS") {
 		if (me.status === "ELIMINE") {
-			return <EliminatedPage me={me} />;
+			return <EliminatedPage me={me} game={game} players={players} />;
 		}
 		if (me.victimKill) {
 			return (

@@ -1,16 +1,61 @@
-import type { Me } from "shared";
+import type { Game, Me, Player } from "shared";
+import SpyKilled from "../../assets/SpyKilled";
+import BrandBar from "../../components/BrandBar/BrandBar";
+import Chrono from "../../components/Chrono/Chrono";
+import styles from "./EliminatedPage.module.css";
 
-function EliminatedPage({ me }: { me: Me }) {
+// Écran d'un joueur éliminé (tué ou parti de lui-même) pendant que la partie continue.
+function EliminatedPage({
+	me,
+	game,
+	players,
+}: {
+	me: Me;
+	game: Game;
+	players: Player[];
+}) {
+	const aliveCount = players.filter((player) => player.status === "VIVANT").length;
+
 	return (
 		<main>
-			<h1>
-				{me.eliminatedBy
-					? `Tu t'es fait éliminé(e) par ${me.eliminatedBy}`
-					: "Tu as quitté la partie"}
-			</h1>
-			<p>
-				avec {me.killCount} kill{me.killCount > 1 && "s"} à ton actif
-			</p>
+			<BrandBar title="Killer" gameName={game.name} />
+
+			<div>
+				<Chrono game={game} />
+				<p className={styles.remaining}>
+					{aliveCount} joueur{aliveCount > 1 && "s"} restant
+					{aliveCount > 1 && "s"}
+				</p>
+			</div>
+
+			<p className="eyebrow">Rapport d'incident / Échec de la mission</p>
+
+			<div className={styles.illustration}>
+				<SpyKilled />
+			</div>
+
+			<div className={styles.text}>
+				<p className={styles.title}>
+					{me.eliminatedBy
+						? `Tu t'es fait éliminer par ${me.eliminatedBy}`
+						: "Tu as quitté la partie"}
+				</p>
+				<p className={styles.detail}>
+					{me.eliminatedBy
+						? "Ton aventure s'arrête ici, mais la partie continue pour les autres agents."
+						: "Ta mission s'arrête ici. Tes kills restent au classement final."}
+				</p>
+			</div>
+
+			<div className={`actions ${styles.score}`}>
+				<p className={styles.count}>{me.killCount}</p>
+				<div>
+					<p className={styles.countLabel}>
+						kill{me.killCount > 1 && "s"} à ton actif
+					</p>
+					<p className="hint">Ton dossier reste dans les annales.</p>
+				</div>
+			</div>
 		</main>
 	);
 }

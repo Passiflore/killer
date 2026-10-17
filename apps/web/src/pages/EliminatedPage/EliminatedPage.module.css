@@ -1,0 +1,60 @@
+.remaining {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 12px;
+	font-size: 13px;
+	color: var(--text-soft);
+}
+
+.remaining::before {
+	content: "";
+	width: 6px;
+	height: 6px;
+	background: var(--red);
+}
+
+.illustration {
+	display: flex;
+	justify-content: center;
+}
+
+.text {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+}
+
+.title {
+	font-family: var(--font-hand);
+	font-size: 32px;
+	line-height: 1.1;
+	text-transform: uppercase;
+	overflow-wrap: anywhere;
+}
+
+.detail {
+	font-size: 14px;
+	color: var(--text-soft);
+}
+
+/* Encart du bas : gros chiffre à gauche, libellé à droite */
+.score {
+	flex-direction: row;
+	align-items: center;
+	gap: 24px;
+	padding: 24px;
+	background: var(--surface);
+}
+
+.count {
+	flex: 1;
+	font-family: var(--font-hand);
+	font-size: 48px;
+	line-height: 1;
+}
+
+.countLabel {
+	font-size: 16px;
+	margin-bottom: 8px;
+}
