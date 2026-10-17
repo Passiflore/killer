@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Contest, Game, GameEvent, Player } from "shared";
 import { orgaRequest } from "../../api";
 import BrandBar from "../../components/BrandBar/BrandBar";
@@ -99,8 +99,15 @@ function OrgaDashboard({
 	useEffect(() => {
 		orgaRequest("/api/orga/code", orgaCode, "GET")
 			.then((data) => setGameCode((data as { code: string }).code))
-			.catch(console.error);
-	}, [orgaCode]);
+			.catch((err) => {
+				// Code gardé d'une ancienne partie : on l'oublie et on redemande le code.
+				if (err instanceof Error && err.message === "Code orga incorrect.") {
+					onLogout();
+				} else {
+					console.error(err);
+				}
+			});
+	}, [orgaCode, onLogout]);
 
 	async function run(path: string, body?: unknown) {
 		setError(null);
@@ -240,10 +247,11 @@ function OrgaDashboardPage({
 		setOrgaCode(code);
 	}
 
-	function logout() {
+	// useCallback : fonction stable, pour ne pas relancer les effets qui en dépendent.
+	const logout = useCallback(() => {
 		localStorage.removeItem(ORGA_CODE_KEY);
 		setOrgaCode(null);
-	}
+	}, []);
 
 	if (!orgaCode) {
 		return <OrgaLogin onLogin={login} />;

@@ -310,6 +310,8 @@ app.post("/api/game", (request, response) => {
 
 	io.emit("game", getGame());
 	io.emit("players", listPlayers());
+	// Visible seulement dans les logs du serveur : permet de retrouver un code orga perdu.
+	console.log(`Partie créée : « ${name} », code orga ${orgaCode}`);
 
 	const result: CreateGameResponse = {
 		orgaCode,
@@ -745,4 +747,10 @@ app.get("/{*splat}", (request, response) => {
 
 httpServer.listen(port, () => {
 	console.log(`Serveur prêt sur http://localhost:${port}`);
+	const current = db.prepare("SELECT name, orga_code FROM game WHERE id = 1").get() as
+		| { name: string; orga_code: string }
+		| undefined;
+	if (current) {
+		console.log(`Partie en cours : « ${current.name} », code orga ${current.orga_code}`);
+	}
 });
