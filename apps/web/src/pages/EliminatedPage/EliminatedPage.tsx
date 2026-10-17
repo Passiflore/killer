@@ -2,6 +2,7 @@ import type { Game, Me, Player } from "shared";
 import SpyKilled from "../../assets/SpyKilled";
 import BrandBar from "../../components/BrandBar/BrandBar";
 import Chrono from "../../components/Chrono/Chrono";
+import { ORGA_CODE_KEY } from "../../storage";
 import styles from "./EliminatedPage.module.css";
 
 // Écran d'un joueur éliminé (tué ou parti de lui-même) pendant que la partie continue.
@@ -19,6 +20,13 @@ function EliminatedPage({
 	return (
 		<main>
 			<BrandBar title="Killer" gameName={game.name} />
+
+			{/* L'orga joueur doit pouvoir rejoindre son espace (contestations, fin de partie). */}
+			{localStorage.getItem(ORGA_CODE_KEY) !== null && (
+				<a className="button" href="/orga">
+					Portail admin
+				</a>
+			)}
 
 			<div>
 				<Chrono game={game} />

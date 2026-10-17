@@ -5,6 +5,7 @@ import SpyArgument from "../../assets/SpyArgument";
 import SpyKilled from "../../assets/SpyKilled";
 import BrandBar from "../../components/BrandBar/BrandBar";
 import Chrono from "../../components/Chrono/Chrono";
+import { ORGA_CODE_KEY } from "../../storage";
 import styles from "./KilledPage.module.css";
 
 // Affiche « hh:mm:ss » jusqu'à `until`, mis à jour chaque seconde.
@@ -56,6 +57,13 @@ function KilledPage({
 	return (
 		<main>
 			<BrandBar title="Killer" gameName={game.name} />
+
+			{/* L'orga joueur doit pouvoir rejoindre son espace (contestations, fin de partie). */}
+			{localStorage.getItem(ORGA_CODE_KEY) !== null && (
+				<a className="button" href="/orga">
+					Portail admin
+				</a>
+			)}
 
 			<div>
 				<Chrono game={game} />
