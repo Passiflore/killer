@@ -1,0 +1,53 @@
+.backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--gutter);
+	background: rgb(0 0 0 / 60%);
+}
+
+.modal {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	width: 100%;
+	max-width: 432px;
+	padding: 20px;
+	background: var(--text);
+	color: var(--bg);
+}
+
+.illustration {
+	display: flex;
+	justify-content: center;
+	margin: 8px 0;
+}
+
+.illustration svg {
+	width: 140px;
+	height: auto;
+}
+
+.title {
+	font-family: var(--font-hand);
+	font-size: 24px;
+	text-transform: uppercase;
+}
+
+.text {
+	font-size: 13px;
+	color: var(--text-muted);
+}
+
+.cancel {
+	align-self: center;
+	padding: 4px 8px;
+	border: none;
+	background: none;
+	color: var(--bg);
+	font-size: 14px;
+	text-decoration: underline;
+}

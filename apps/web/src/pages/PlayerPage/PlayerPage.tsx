@@ -4,6 +4,7 @@ import { postAsPlayer } from "../../api";
 import Avatar from "../../components/Avatar/Avatar";
 import BrandBar from "../../components/BrandBar/BrandBar";
 import Chrono from "../../components/Chrono/Chrono";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import { ORGA_CODE_KEY } from "../../storage";
 import styles from "./PlayerPage.module.css";
 
@@ -57,6 +58,9 @@ function PlayerPage({
 	const [seenTargetId, setSeenTargetId] = useState(me.target?.id);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [confirming, setConfirming] = useState<"kill" | "leave" | null>(
+		null,
+	);
 
 	const alivePlayers = players.filter((player) => player.status === "VIVANT");
 	const isOrga = localStorage.getItem(ORGA_CODE_KEY) !== null;
@@ -73,7 +77,7 @@ function PlayerPage({
 	}
 
 	async function handleKill() {
-		if (!window.confirm(`Tu confirmes avoir eu ${target.name} ?`)) return;
+		setConfirming(null);
 		setError(null);
 		setIsLoading(true);
 		try {
@@ -86,9 +90,7 @@ function PlayerPage({
 	}
 
 	async function handleLeave() {
-		if (!window.confirm("Quitter la partie ? Tu ne pourras pas revenir.")) {
-			return;
-		}
+		setConfirming(null);
 		setError(null);
 		try {
 			onMeChange(await postAsPlayer("/api/me/leave"));
@@ -173,16 +175,36 @@ function PlayerPage({
 					<button
 						type="button"
 						className="button secondary"
-						onClick={handleKill}
+						onClick={() => setConfirming("kill")}
 						disabled={isLoading}
 					>
 						J'ai killé
 					</button>
 				)}
-				<button type="button" className={styles.leave} onClick={handleLeave}>
+				<button type="button" className={styles.leave} onClick={() => setConfirming("leave")}>
 					Quitter la partie
 				</button>
 			</div>
+
+			{confirming === "kill" && (
+				<ConfirmModal
+					tag="Kill"
+					title="Tu as killé ?"
+					confirmLabel="Confirmer et killer"
+					isLoading={isLoading}
+					onConfirm={handleKill}
+					onCancel={() => setConfirming(null)}
+				/>
+			)}
+			{confirming === "leave" && (
+				<ConfirmModal
+					tag="Quitter"
+					title="Tu veux partir ?"
+					confirmLabel="Confirmer et quitter la partie"
+					onConfirm={handleLeave}
+					onCancel={() => setConfirming(null)}
+				/>
+			)}
 		</main>
 	);
 }

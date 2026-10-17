@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Contest, Game, GameEvent, Player } from "shared";
 import { orgaRequest } from "../../api";
 import BrandBar from "../../components/BrandBar/BrandBar";
+import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import { socket } from "../../socket";
 import { ORGA_CODE_KEY } from "../../storage";
 import AdminLobby from "./AdminLobby";
@@ -73,6 +74,9 @@ function OrgaDashboard({
 	const [gameCode, setGameCode] = useState<string | null>(null);
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [confirming, setConfirming] = useState<
+		{ type: "end" } | { type: "remove"; player: Player } | null
+	>(null);
 
 	useEffect(() => {
 		function load() {
@@ -124,10 +128,14 @@ function OrgaDashboard({
 
 	const alivePlayers = players.filter((player) => player.status === "VIVANT");
 
-	function removePlayer(player: Player) {
-		if (window.confirm(`Retirer ${player.name} de la partie ?`)) {
-			run(`/api/orga/players/${player.id}/remove`);
-		}
+	async function confirm() {
+		if (!confirming) return;
+		await run(
+			confirming.type === "end"
+				? "/api/orga/end"
+				: `/api/orga/players/${confirming.player.id}/remove`,
+		);
+		setConfirming(null);
 	}
 
 	return (
@@ -156,7 +164,10 @@ function OrgaDashboard({
 				onSave={(endsAt) => run("/api/orga/ends-at", { endsAt })}
 			/>
 
-			<PlayersRow players={alivePlayers} onRemove={removePlayer} />
+			<PlayersRow
+				players={alivePlayers}
+				onRemove={(player) => setConfirming({ type: "remove", player })}
+			/>
 
 			{!isParticipant && (
 				<EventFeed
@@ -171,11 +182,7 @@ function OrgaDashboard({
 				<button
 					type="button"
 					className="button secondary"
-					onClick={() => {
-						if (window.confirm("Terminer la partie pour tout le monde ?")) {
-							run("/api/orga/end");
-						}
-					}}
+					onClick={() => setConfirming({ type: "end" })}
 					disabled={isLoading}
 				>
 					Terminer la partie
@@ -187,6 +194,30 @@ function OrgaDashboard({
 					</button>
 				</p>
 			</div>
+
+			{confirming?.type === "end" && (
+				<ConfirmModal
+					tag="Clôture"
+					title="Terminer la partie ?"
+					detail="Les missions seront clôturées et les résultats révélés à tous."
+					confirmLabel="Confirmer et terminer"
+					cancelLabel="Annuler, continuer la partie"
+					isLoading={isLoading}
+					onConfirm={confirm}
+					onCancel={() => setConfirming(null)}
+				/>
+			)}
+			{confirming?.type === "remove" && (
+				<ConfirmModal
+					tag="Supprimer"
+					title="Supprimer ce joueur ?"
+					detail={`${confirming.player.name} sera retiré(e) de la partie.`}
+					confirmLabel="Confirmer et supprimer"
+					isLoading={isLoading}
+					onConfirm={confirm}
+					onCancel={() => setConfirming(null)}
+				/>
+			)}
 		</main>
 	);
 }
