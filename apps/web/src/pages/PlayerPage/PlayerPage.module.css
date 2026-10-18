@@ -1,10 +1,23 @@
+/* Ligne sous le chrono : joueurs restants à gauche, kills du joueur à droite */
+.stats {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	margin-top: 12px;
+	font-size: 13px;
+	color: var(--text-soft);
+}
+
 .remaining {
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	margin-top: 12px;
-	font-size: 13px;
-	color: var(--text-soft);
+}
+
+.killCount {
+	color: var(--text);
+	font-weight: 700;
 }
 
 .remaining::before {

@@ -125,10 +125,16 @@ function PlayerPage({
 
 			<div>
 				<Chrono game={game} />
-				<p className={styles.remaining}>
-					{alivePlayers.length} joueur{alivePlayers.length > 1 && "s"} restant
-					{alivePlayers.length > 1 && "s"}
-				</p>
+				<div className={styles.stats}>
+					<p className={styles.remaining}>
+						{alivePlayers.length} joueur{alivePlayers.length > 1 && "s"} restant
+						{alivePlayers.length > 1 && "s"}
+					</p>
+					<p>
+						<span className={styles.killCount}>{me.killCount}</span> kill
+						{me.killCount > 1 && "s"}
+					</p>
+				</div>
 			</div>
 
 			<section className={styles.card}>
