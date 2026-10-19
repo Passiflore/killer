@@ -42,6 +42,12 @@ function KilledPage({
 	const autoValidateAt = kill.declaredAt + game.autoValidateMinutes * 60_000;
 	const aliveCount = players.filter((player) => player.status === "VIVANT").length;
 
+	// Le téléphone vibre quand un kill est déclaré contre toi (Android seulement :
+	// l'iPhone ne laisse pas un site web faire vibrer). `?.` : rien si non supporté.
+	useEffect(() => {
+		if (!isContested) navigator.vibrate?.([300, 150, 300, 150, 600]);
+	}, [kill.id, isContested]);
+
 	async function answer(action: "confirm" | "contest") {
 		setError(null);
 		setIsLoading(true);
