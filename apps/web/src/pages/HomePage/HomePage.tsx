@@ -66,6 +66,9 @@ function HomePage({ onCodeOk }: { onCodeOk: (code: string) => void }) {
 					<a className="button secondary" href="/orga">
 						Crée une partie
 					</a>
+					<a className={`link ${styles.rulesLink}`} href="/regles">
+						Comment jouer ?
+					</a>
 				</div>
 			</div>
 		</form>

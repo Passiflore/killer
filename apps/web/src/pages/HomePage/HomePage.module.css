@@ -19,3 +19,10 @@
 	gap: 12px;
 	margin-top: 12px;
 }
+
+.rulesLink {
+	align-self: center;
+	padding: 8px;
+	color: var(--text-soft);
+	text-decoration: underline;
+}

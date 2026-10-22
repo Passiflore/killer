@@ -1,0 +1,42 @@
+.title {
+	margin-top: 8px;
+	font-family: var(--font-hand);
+	font-size: 40px;
+	line-height: 1.1;
+	text-transform: uppercase;
+}
+
+.rules {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+/* Numéro à gauche, titre + texte à droite */
+.rule {
+	display: flex;
+	gap: 16px;
+	align-items: baseline;
+}
+
+.number {
+	flex: none;
+	font-size: 13px;
+	color: var(--red);
+	font-variant-numeric: tabular-nums;
+}
+
+.ruleTitle {
+	font-family: var(--font-hand);
+	font-size: 17px;
+	text-transform: uppercase;
+	margin-bottom: 4px;
+}
+
+.ruleText {
+	font-size: 14px;
+	color: var(--text-soft);
+}

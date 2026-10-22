@@ -12,6 +12,7 @@ import { socket } from "./socket";
 import KilledPage from "./pages/KilledPage/KilledPage";
 import EliminatedPage from "./pages/EliminatedPage/EliminatedPage";
 import EndPage from "./pages/EndPage/EndPage";
+import RulesPage from "./pages/RulesPage/RulesPage";
 
 // Renvoie le joueur, ou null si le serveur ne reconnaît pas le token.
 async function fetchMe(token: string): Promise<Me | null> {
@@ -94,6 +95,10 @@ function App() {
 			socket.off("refresh", onRefresh);
 		};
 	}, []);
+
+	if (window.location.pathname === "/regles") {
+		return <RulesPage />;
+	}
 
 	if (window.location.pathname === "/orga") {
 		if (game === undefined) return <p>Chargement…</p>;
