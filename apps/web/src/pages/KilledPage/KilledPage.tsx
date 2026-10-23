@@ -7,6 +7,7 @@ import BrandBar from "../../components/BrandBar/BrandBar";
 import Chrono from "../../components/Chrono/Chrono";
 import { ORGA_CODE_KEY } from "../../storage";
 import styles from "./KilledPage.module.css";
+import { errorMessage } from "../../errorMessage";
 
 // Affiche « hh:mm:ss » jusqu'à `until`, mis à jour chaque seconde.
 function Countdown({ until }: { until: number }) {
@@ -54,7 +55,7 @@ function KilledPage({
 		try {
 			onMeChange(await postAsPlayer(`/api/kills/${kill.id}/${action}`));
 		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
+			setError(errorMessage(err));
 		} finally {
 			setIsLoading(false);
 		}

@@ -11,6 +11,7 @@ import EndTimeEditor from "./EndTimeEditor";
 import EventFeed from "./EventFeed";
 import styles from "./OrgaDashboardPage.module.css";
 import PlayersRow from "./PlayersRow";
+import { errorMessage } from "../../errorMessage";
 
 function OrgaLogin({ onLogin }: { onLogin: (orgaCode: string) => void }) {
 	const [orgaCode, setOrgaCode] = useState("");
@@ -23,7 +24,7 @@ function OrgaLogin({ onLogin }: { onLogin: (orgaCode: string) => void }) {
 			await orgaRequest("/api/orga/login", orgaCode.trim().toUpperCase());
 			onLogin(orgaCode.trim().toUpperCase());
 		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
+			setError(errorMessage(err));
 		}
 	}
 
@@ -115,7 +116,7 @@ function OrgaDashboard({
 		try {
 			await orgaRequest(path, orgaCode, "POST", body);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
+			setError(errorMessage(err));
 		} finally {
 			setIsLoading(false);
 		}

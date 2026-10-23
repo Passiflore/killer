@@ -6,6 +6,7 @@ import Avatar from "../../components/Avatar/Avatar";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import { ORGA_CODE_KEY, TOKEN_KEY } from "../../storage";
 import styles from "./EndPage.module.css";
+import { errorMessage } from "../../errorMessage";
 
 function duration(game: Game): string {
 	const minutes = Math.max(
@@ -68,7 +69,7 @@ function EndPage({ game }: { game: Game }) {
 			localStorage.removeItem(TOKEN_KEY);
 			window.location.href = "/orga";
 		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
+			setError(errorMessage(err));
 			setIsLoading(false);
 			setIsConfirming(false);
 		}

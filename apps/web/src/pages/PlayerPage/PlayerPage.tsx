@@ -7,6 +7,7 @@ import Chrono from "../../components/Chrono/Chrono";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
 import { ORGA_CODE_KEY } from "../../storage";
 import styles from "./PlayerPage.module.css";
+import { errorMessage } from "../../errorMessage";
 
 function EyeIcon({ crossed }: { crossed: boolean }) {
 	return (
@@ -83,7 +84,7 @@ function PlayerPage({
 		try {
 			onMeChange(await postAsPlayer("/api/kills"));
 		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
+			setError(errorMessage(err));
 		} finally {
 			setIsLoading(false);
 		}
@@ -97,7 +98,7 @@ function PlayerPage({
 			onMeChange(await postAsPlayer("/api/me/mission"));
 			setShowMission(true);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
+			setError(errorMessage(err));
 		} finally {
 			setIsLoading(false);
 		}
@@ -109,7 +110,7 @@ function PlayerPage({
 		try {
 			onMeChange(await postAsPlayer("/api/me/leave"));
 		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
+			setError(errorMessage(err));
 		}
 	}
 

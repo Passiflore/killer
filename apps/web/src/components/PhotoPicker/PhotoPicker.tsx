@@ -2,6 +2,7 @@ import { useRef } from "react";
 import agentPortrait from "../../assets/AgentPortrait.png";
 import { resizePhoto } from "../../photo";
 import styles from "./PhotoPicker.module.css";
+import { errorMessage } from "../../errorMessage";
 
 function PhotoPicker({
 	photo,
@@ -21,7 +22,7 @@ function PhotoPicker({
 		try {
 			onPhoto(await resizePhoto(file));
 		} catch (err) {
-			onError(err instanceof Error ? err.message : String(err));
+			onError(errorMessage(err));
 		}
 	}
 

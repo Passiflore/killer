@@ -6,6 +6,7 @@ import LobbyHeader from "../../components/LobbyHeader/LobbyHeader";
 import MissionInput from "../../components/MissionInput/MissionInput";
 import PlayerGrid from "../../components/PlayerGrid/PlayerGrid";
 import styles from "./AdminLobby.module.css";
+import { errorMessage } from "../../errorMessage";
 
 function AdminLobby({
 	game,
@@ -37,7 +38,7 @@ function AdminLobby({
 		try {
 			await action();
 		} catch (err) {
-			setError(err instanceof Error ? err.message : String(err));
+			setError(errorMessage(err));
 		} finally {
 			setIsLoading(false);
 		}
