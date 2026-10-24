@@ -2,7 +2,8 @@
 	"name": "killer",
 	"private": true,
 	"scripts": {
-		"dev": "pnpm --filter web dev"
+		"dev": "pnpm --filter web dev",
+		"check": "pnpm --filter api test && pnpm --filter api typecheck && pnpm --filter web lint && pnpm --filter web build"
 	},
 	"packageManager": "pnpm@9.12.2"
 }

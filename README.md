@@ -101,6 +101,14 @@ redirige `/api` et `/socket.io` vers le serveur.
 
 ## Tests et vérifications
 
+Avant de pousser sur `main` (chaque push redéploie), tout vérifier d'un coup :
+
+```bash
+pnpm check
+```
+
+Ou une vérification à la fois :
+
 ```bash
 pnpm --filter api test        # tests du tirage et des kills
 pnpm --filter api typecheck
