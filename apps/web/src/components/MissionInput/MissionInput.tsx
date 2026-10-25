@@ -27,6 +27,7 @@ function MissionInput({
 				placeholder="Rajoute des missions..."
 				value={draft}
 				onChange={(event) => setDraft(event.target.value)}
+				maxLength={200}
 				onKeyDown={(event) => {
 					if (event.key === "Enter" && !event.shiftKey) {
 						event.preventDefault();

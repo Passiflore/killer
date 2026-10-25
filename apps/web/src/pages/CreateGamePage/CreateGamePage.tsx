@@ -100,6 +100,7 @@ function CreateGamePage({ onCreated }: { onCreated: (me: Me | null) => void }) {
 					value={name}
 					onChange={(event) => setName(event.target.value)}
 					autoComplete="off"
+					maxLength={40}
 				/>
 			</div>
 
@@ -111,6 +112,7 @@ function CreateGamePage({ onCreated }: { onCreated: (me: Me | null) => void }) {
 					value={orgaName}
 					onChange={(event) => setOrgaName(event.target.value)}
 					autoComplete="off"
+					maxLength={30}
 				/>
 			</div>
 
@@ -162,6 +164,7 @@ function CreateGamePage({ onCreated }: { onCreated: (me: Me | null) => void }) {
 							value={finalPlayerName}
 							onChange={(event) => setPlayerName(event.target.value)}
 							autoComplete="off"
+							maxLength={30}
 						/>
 					</div>
 				</div>

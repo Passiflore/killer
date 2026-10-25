@@ -87,6 +87,7 @@ function JoinPage({
 					value={name}
 					onChange={(event) => handleNameChange(event.target.value)}
 					autoComplete="off"
+					maxLength={30}
 					aria-invalid={error !== null}
 					aria-describedby={error ? "name-error" : undefined}
 				/>
