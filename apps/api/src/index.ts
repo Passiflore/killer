@@ -297,6 +297,12 @@ app.post("/api/game", (request, response) => {
 					.map((mission: unknown) => String(mission).trim())
 					.filter((mission: string) => mission.length > 0)
 			: [];
+	if (customMissions.some((mission) => mission.length > 200)) {
+		response
+			.status(400)
+			.json({ error: "Une mission doit faire entre 1 et 200 caractères." });
+		return;
+	}
 	if (getGame()) {
 		response.status(409).json({ error: "Une partie existe déjà." });
 		return;
