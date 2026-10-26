@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Game, PlayerResult, Results } from "shared";
+import type { ApiError, Game, PlayerResult, Results } from "shared";
 import { orgaRequest } from "../../api";
 import EndGame from "../../assets/EndGame";
 import Avatar from "../../components/Avatar/Avatar";
@@ -56,6 +56,7 @@ function EndPage({ game }: { game: Game }) {
 	const [isConfirming, setIsConfirming] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [loadError, setLoadError] = useState<string | null>(null);
 	const orgaCode = localStorage.getItem(ORGA_CODE_KEY);
 
 	// L'orga efface la partie terminée, puis repart sur le formulaire de création.
@@ -75,12 +76,40 @@ function EndPage({ game }: { game: Game }) {
 		}
 	}
 
-	useEffect(() => {
+	// Demande les résultats au serveur. En cas d'échec, on affiche l'erreur
+	// au lieu de rester bloqué sur « Chargement… ».
+	function loadResults() {
 		fetch("/api/results")
-			.then((response) => response.json())
-			.then((data) => setResults(data as Results))
-			.catch(console.error);
-	}, []);
+			.then(async (response) => {
+				const data = await response.json();
+				if (!response.ok) throw new Error((data as ApiError).error);
+				setResults(data as Results);
+			})
+			.catch((err) => {
+				console.error(err);
+				setLoadError(errorMessage(err));
+			});
+	}
+
+	function retry() {
+		setLoadError(null);
+		loadResults();
+	}
+
+	useEffect(loadResults, []);
+
+	if (loadError) {
+		return (
+			<main>
+				<p className="error">
+					Impossible de charger les résultats : {loadError}
+				</p>
+				<button type="button" className="button" onClick={retry}>
+					Réessayer
+				</button>
+			</main>
+		);
+	}
 
 	if (!results) {
 		return <p>Chargement des résultats…</p>;
