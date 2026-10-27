@@ -14,12 +14,15 @@ import EliminatedPage from "./pages/EliminatedPage/EliminatedPage";
 import EndPage from "./pages/EndPage/EndPage";
 import RulesPage from "./pages/RulesPage/RulesPage";
 
-// Renvoie le joueur, ou null si le serveur ne reconnaît pas le token.
+// Renvoie le joueur, ou null si le serveur ne reconnaît pas le token (401).
+// Toute autre erreur (serveur qui redémarre, 502…) lève une exception :
+// le token est peut-être encore valable, il ne faut pas l'effacer.
 async function fetchMe(token: string): Promise<Me | null> {
 	const response = await fetch("/api/me", {
 		headers: { Authorization: `Bearer ${token}` },
 	});
-	if (!response.ok) return null;
+	if (response.status === 401) return null;
+	if (!response.ok) throw new Error(`Erreur serveur ${response.status}`);
 	return (await response.json()) as Me;
 }
 
