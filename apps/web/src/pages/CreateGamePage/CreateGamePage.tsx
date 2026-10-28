@@ -4,20 +4,10 @@ import MissionInput from "../../components/MissionInput/MissionInput";
 import PhotoPicker from "../../components/PhotoPicker/PhotoPicker";
 import { ORGA_CODE_KEY, TOKEN_KEY } from "../../storage";
 import styles from "./CreateGamePage.module.css";
+import { toTimestamp } from "../../time";
 
 // Délais proposés (en minutes) avant qu'un kill sans réponse soit validé.
 const AUTO_VALIDATE_CHOICES = [5, 10, 15, 30];
-
-function toTimestamp(time: string): number | null {
-	if (!time) return null;
-	const [hours, minutes] = time.split(":").map(Number);
-	const date = new Date();
-	date.setHours(hours, minutes, 0, 0);
-	if (date.getTime() <= Date.now()) {
-		date.setDate(date.getDate() + 1);
-	}
-	return date.getTime();
-}
 
 function CreateGamePage({ onCreated }: { onCreated: (me: Me | null) => void }) {
 	const [name, setName] = useState("");

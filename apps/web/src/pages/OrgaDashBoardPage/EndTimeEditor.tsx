@@ -2,17 +2,7 @@ import { useState } from "react";
 import type { Game } from "shared";
 import Chrono from "../../components/Chrono/Chrono";
 import styles from "./OrgaDashboardPage.module.css";
-
-function toTimestamp(time: string): number | null {
-	if (!time) return null;
-	const [hours, minutes] = time.split(":").map(Number);
-	const date = new Date();
-	date.setHours(hours, minutes, 0, 0);
-	if (date.getTime() <= Date.now()) {
-		date.setDate(date.getDate() + 1);
-	}
-	return date.getTime();
-}
+import { toTimestamp } from "../../time";
 
 function toTime(timestamp: number): string {
 	return new Date(timestamp).toLocaleTimeString("fr-FR", {
