@@ -5,6 +5,9 @@ import PhotoPicker from "../../components/PhotoPicker/PhotoPicker";
 import { ORGA_CODE_KEY, TOKEN_KEY } from "../../storage";
 import styles from "./CreateGamePage.module.css";
 
+// Délais proposés (en minutes) avant qu'un kill sans réponse soit validé.
+const AUTO_VALIDATE_CHOICES = [5, 10, 15, 30];
+
 function toTimestamp(time: string): number | null {
 	if (!time) return null;
 	const [hours, minutes] = time.split(":").map(Number);
@@ -20,6 +23,7 @@ function CreateGamePage({ onCreated }: { onCreated: (me: Me | null) => void }) {
 	const [name, setName] = useState("");
 	const [orgaName, setOrgaName] = useState("");
 	const [endTime, setEndTime] = useState("");
+	const [autoValidateMinutes, setAutoValidateMinutes] = useState(10);
 	const [isParticipant, setIsParticipant] = useState(true);
 	const [playerName, setPlayerName] = useState<string | null>(null);
 	const [photo, setPhoto] = useState<string | null>(null);
@@ -49,6 +53,7 @@ function CreateGamePage({ onCreated }: { onCreated: (me: Me | null) => void }) {
 					name,
 					orgaName,
 					endsAt: toTimestamp(endTime),
+					autoValidateMinutes,
 					participant: isParticipant,
 					playerName: finalPlayerName,
 					photo,
@@ -124,6 +129,23 @@ function CreateGamePage({ onCreated }: { onCreated: (me: Me | null) => void }) {
 					value={endTime}
 					onChange={(event) => setEndTime(event.target.value)}
 				/>
+			</div>
+
+			<div className="field">
+				<span className="label">Kill validé sans réponse de la victime après</span>
+				<div className={`${styles.toggle} ${styles.delays}`}>
+					{AUTO_VALIDATE_CHOICES.map((minutes) => (
+						<button
+							key={minutes}
+							type="button"
+							className={`button ${autoValidateMinutes === minutes ? "" : "secondary"} ${styles.choice}`}
+							onClick={() => setAutoValidateMinutes(minutes)}
+							aria-pressed={autoValidateMinutes === minutes}
+						>
+							{minutes} min
+						</button>
+					))}
+				</div>
 			</div>
 
 			<div className="field">

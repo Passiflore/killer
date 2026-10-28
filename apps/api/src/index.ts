@@ -260,6 +260,7 @@ app.post("/api/game", (request, response) => {
 	const name = String(body.name ?? "").trim();
 	const orgaName = String(body.orgaName ?? "").trim();
 	const endsAt = body.endsAt ?? null;
+	const autoValidateMinutes = body.autoValidateMinutes ?? 10;
 	const participant = body.participant === true;
 	const playerName = String(body.playerName ?? "").trim();
 	const photo = body.photo ?? null;
@@ -278,6 +279,16 @@ app.post("/api/game", (request, response) => {
 	}
 	if (endsAt !== null && (typeof endsAt !== "number" || endsAt <= Date.now())) {
 		response.status(400).json({ error: "L'heure de fin doit être à venir." });
+		return;
+	}
+	if (
+		!Number.isInteger(autoValidateMinutes) ||
+		autoValidateMinutes < 1 ||
+		autoValidateMinutes > 60
+	) {
+		response
+			.status(400)
+			.json({ error: "Le délai de validation doit être entre 1 et 60 minutes." });
 		return;
 	}
 	if (participant && (playerName.length === 0 || playerName.length > 30)) {
@@ -312,9 +323,17 @@ app.post("/api/game", (request, response) => {
 	let token: string | null = null;
 	inTransaction(db, () => {
 		db.prepare(
-			`INSERT INTO game (id, orga_code, code, name, orga_name, ends_at, orga_plays)
-			 VALUES (1, ?, ?, ?, ?, ?, ?)`,
-		).run(orgaCode, generateCode(4), name, orgaName, endsAt, participant ? 1 : 0);
+			`INSERT INTO game (id, orga_code, code, name, orga_name, ends_at, auto_validate_minutes, orga_plays)
+			 VALUES (1, ?, ?, ?, ?, ?, ?, ?)`,
+		).run(
+			orgaCode,
+			generateCode(4),
+			name,
+			orgaName,
+			endsAt,
+			autoValidateMinutes,
+			participant ? 1 : 0,
+		);
 
 		const insertMission = db.prepare(
 			"INSERT INTO missions (text, custom) VALUES (?, ?)",

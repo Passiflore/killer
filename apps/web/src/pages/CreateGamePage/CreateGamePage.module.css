@@ -18,6 +18,11 @@
 	gap: 16px;
 }
 
+.delays {
+	grid-template-columns: repeat(4, 1fr);
+	gap: 8px;
+}
+
 .choice {
 	min-height: 48px;
 	font-size: 16px;
