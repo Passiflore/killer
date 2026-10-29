@@ -1,5 +1,6 @@
 import { useState } from "react";
-import type { ApiError } from "shared";
+import { postJson } from "../../api";
+import { errorMessage } from "../../errorMessage";
 import styles from "./HomePage.module.css";
 import SpyWelcome from "../../assets/spyWelcome";
 
@@ -15,21 +16,10 @@ function HomePage({ onCodeOk }: { onCodeOk: (code: string) => void }) {
 		setError(null);
 		setIsLoading(true);
 		try {
-			const response = await fetch("/api/game/check", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ code }),
-			});
-
-			if (!response.ok) {
-				setError(((await response.json()) as ApiError).error);
-				return;
-			}
-
+			await postJson("/api/game/check", { code });
 			onCodeOk(code.trim().toUpperCase());
 		} catch (err) {
-			setError("Impossible de joindre le serveur. Vérifie ta connexion.");
-			console.error(err);
+			setError(errorMessage(err));
 		} finally {
 			setIsLoading(false);
 		}

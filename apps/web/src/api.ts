@@ -12,11 +12,27 @@ async function request(path: string, init: RequestInit): Promise<unknown> {
 	}
 
 	if (response.status === 204) return null;
-	const data = await response.json();
+	let data: unknown;
+	try {
+		data = await response.json();
+	} catch {
+		// Réponse qui n'est pas du JSON : souvent une page d'erreur de l'hébergeur
+		// pendant un redémarrage du serveur.
+		throw new Error("Le serveur ne répond pas correctement. Réessaie dans un instant.");
+	}
 	if (!response.ok) {
 		throw new Error((data as ApiError).error);
 	}
 	return data;
+}
+
+// Envoie des données JSON (formulaires d'accueil, de création, pour rejoindre).
+export function postJson(path: string, body: unknown): Promise<unknown> {
+	return request(path, {
+		method: "POST",
+		headers: { "Content-Type": "application/json" },
+		body: JSON.stringify(body),
+	});
 }
 
 // Envoie une action du joueur (avec son badge) et renvoie ses infos à jour.

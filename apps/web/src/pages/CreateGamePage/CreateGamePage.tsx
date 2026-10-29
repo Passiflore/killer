@@ -1,5 +1,7 @@
 import { useState } from "react";
-import type { ApiError, CreateGameResponse, Me } from "shared";
+import type { CreateGameResponse, Me } from "shared";
+import { postJson } from "../../api";
+import { errorMessage } from "../../errorMessage";
 import MissionInput from "../../components/MissionInput/MissionInput";
 import PhotoPicker from "../../components/PhotoPicker/PhotoPicker";
 import { ORGA_CODE_KEY, TOKEN_KEY } from "../../storage";
@@ -36,38 +38,23 @@ function CreateGamePage({ onCreated }: { onCreated: (me: Me | null) => void }) {
 		setError(null);
 		setIsLoading(true);
 		try {
-			const response = await fetch("/api/game", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					name,
-					orgaName,
-					endsAt: toTimestamp(endTime),
-					autoValidateMinutes,
-					participant: isParticipant,
-					playerName: finalPlayerName,
-					photo,
-					missions,
-				}),
-			});
-			const data = await response.json();
-
-			if (!response.ok) {
-				setError((data as ApiError).error);
-				return;
-			}
-
-			const created = data as CreateGameResponse;
+			const created = (await postJson("/api/game", {
+				name,
+				orgaName,
+				endsAt: toTimestamp(endTime),
+				autoValidateMinutes,
+				participant: isParticipant,
+				playerName: finalPlayerName,
+				photo,
+				missions,
+			})) as CreateGameResponse;
 			localStorage.setItem(ORGA_CODE_KEY, created.orgaCode);
 			if (created.player) {
 				localStorage.setItem(TOKEN_KEY, created.player.token);
 			}
 			onCreated(created.player?.me ?? null);
 		} catch (err) {
-			setError(
-				"Impossible de créer la partie. Vérifie ta connexion et réessaie.",
-			);
-			console.error(err);
+			setError(errorMessage(err));
 		} finally {
 			setIsLoading(false);
 		}

@@ -1,5 +1,7 @@
 import { useState } from "react";
-import type { ApiError, JoinResponse, Me } from "shared";
+import type { JoinResponse, Me } from "shared";
+import { postJson } from "../../api";
+import { errorMessage } from "../../errorMessage";
 import { TOKEN_KEY } from "../../storage";
 import PhotoPicker from "../../components/PhotoPicker/PhotoPicker";
 import styles from "./JoinPage.module.css";
@@ -32,26 +34,15 @@ function JoinPage({
 		setError(null);
 		setIsLoading(true);
 		try {
-			const response = await fetch("/api/players", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ name, code, photo }),
-			});
-			const data = await response.json();
-
-			if (!response.ok) {
-				setError((data as ApiError).error);
-				return;
-			}
-
-			const joined = data as JoinResponse;
+			const joined = (await postJson("/api/players", {
+				name,
+				code,
+				photo,
+			})) as JoinResponse;
 			localStorage.setItem(TOKEN_KEY, joined.token);
 			onJoined(joined.me);
 		} catch (err) {
-			setError(
-				"Impossible de rejoindre la partie. Vérifie ta connexion et réessaie.",
-			);
-			console.error(err);
+			setError(errorMessage(err));
 		} finally {
 			setIsLoading(false);
 		}
