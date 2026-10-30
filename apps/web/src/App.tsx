@@ -76,6 +76,12 @@ function App() {
 		if (gameStatus === "EN_COURS") reloadMe(setMe);
 	}, [gameStatus]);
 
+	// Nom de la partie dans l'onglet du navigateur.
+	const gameName = game?.name;
+	useEffect(() => {
+		document.title = gameName ? `Killer · ${gameName}` : "Killer";
+	}, [gameName]);
+
 	// Plus de partie (l'orga a tout effacé) : le badge de ce téléphone ne vaut plus rien.
 	useEffect(() => {
 		const onGame = (next: Game | null) => {
