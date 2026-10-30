@@ -111,6 +111,7 @@ Ou une vérification à la fois :
 
 ```bash
 pnpm --filter api test        # tests du tirage et des kills
+pnpm --filter api simulate    # joue une partie complète contre un vrai serveur (~10 s)
 pnpm --filter api typecheck
 pnpm --filter web lint
 pnpm --filter web build

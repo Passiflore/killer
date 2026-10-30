@@ -5,7 +5,8 @@
 	"scripts": {
 		"dev": "node --watch src/index.ts",
 		"typecheck": "tsc",
-		"test": "node --test \"src/**/*.test.ts\""
+		"test": "node --test \"src/**/*.test.ts\"",
+		"simulate": "node scripts/simulate.ts"
 	},
 	"dependencies": {
 		"express": "^5.2.1",
