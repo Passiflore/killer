@@ -18,19 +18,21 @@ LOBBY ──(l'orga lance)──▶ EN_COURS ──(dernier survivant, heure de 
 Un kill déclaré passe par une validation :
 
 ```
-EN_ATTENTE ──(la victime confirme, ou 10 min sans réponse)──▶ VALIDE
+EN_ATTENTE ──(la victime confirme, ou délai écoulé sans réponse)──▶ VALIDE
      │
      └──(la victime conteste)──▶ CONTESTE ──(l'orga tranche)──▶ VALIDE | REJETE
 ```
 
-La validation automatique tourne **côté serveur** : elle a lieu même si le téléphone de la
+Le délai est choisi par l'orga à la création (5, 10, 15 ou 30 min ; 10 par défaut). La
+validation automatique tourne **côté serveur** : elle a lieu même si le téléphone de la
 victime est éteint.
 
 ## Fonctionnalités
 
 **Joueur**
 
-- Rejoindre avec le code de la partie (4 caractères), un nom et un selfie
+- Rejoindre avec le code de la partie (4 caractères) ou le QR code, un nom et un selfie
+- Page « Comment jouer » (`/regles`) accessible depuis l'accueil
 - Lobby en direct, puis écran secret : cible et mission masquées, affichées d'un tap
 - Déclarer un kill, confirmer ou contester celui dont on est victime
 - Changer de mission une fois par partie
@@ -41,7 +43,9 @@ victime est éteint.
 
 **Organisateur** (`/orga`)
 
-- Créer la partie : nom, heure de fin facultative, missions personnalisées, participer ou non
+- Créer la partie : nom, heure de fin facultative, délai de validation automatique,
+  missions personnalisées, participer ou non
+- Inviter depuis le lobby : code à copier ou QR code à scanner
 - Lancer la partie, trancher les contestations, retirer un joueur, modifier l'heure de fin
 - Terminer la partie, puis tout effacer pour en relancer une
 - L'orga peut aussi jouer ; dans ce cas le fil d'événements est masqué (il révélerait son
@@ -74,9 +78,11 @@ apps/
     src/draw.ts     tirage du cycle et des missions (testé)
     src/schema.ts   schéma SQLite
     src/missions.ts missions par défaut
+    scripts/simulate.ts  partie complète simulée contre un vrai serveur
   web/            front React
     src/pages/      un dossier par écran
     src/components/ composants réutilisables
+    src/api.ts      appels au serveur (request, postJson, postAsPlayer, orgaRequest)
 packages/
   shared/         types communs front/back (Game, Player, Kill…)
 ```
