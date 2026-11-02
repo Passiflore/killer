@@ -90,6 +90,14 @@
 	background: var(--red);
 	color: var(--text);
 	font-size: 10px;
+	animation: pulse 1.2s ease-in-out 3;
+}
+
+/* Le badge « Nouvelle » clignote 3 fois pour attirer l'œil. */
+@keyframes pulse {
+	50% {
+		opacity: 0.3;
+	}
 }
 
 .target {
@@ -118,6 +126,12 @@
 	font-family: var(--font-hand);
 	font-size: 26px;
 	line-height: 1.25;
+}
+
+/* Le flou s'efface en douceur quand on montre la cible ou la mission. */
+.target,
+.mission {
+	transition: filter 0.3s ease;
 }
 
 .hidden {

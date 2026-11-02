@@ -129,7 +129,7 @@ function EndPage({ game }: { game: Game }) {
 		<main>
 			<div>
 				<p className="eyebrow">[{game.name}] / Dossier classé</p>
-				<p className={styles.title}>Fin de partie</p>
+				<p className={`${styles.title} stamp`}>Fin de partie</p>
 			</div>
 
 			<div className={styles.illustration}>

@@ -87,7 +87,7 @@ function KilledPage({
 			</div>
 
 			<div className={styles.text}>
-				<p className={styles.title}>
+				<p className={`${styles.title} stamp`}>
 					{isContested ? (
 						<>
 							Contestation

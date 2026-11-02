@@ -233,3 +233,61 @@ ol {
 	margin: 0;
 	padding-left: 20px;
 }
+
+/* --- Animations ------------------------------------------------------------ */
+
+/* Chaque écran arrive en fondu, en remontant légèrement. */
+@keyframes screen-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+}
+
+#root > * {
+	animation: screen-in 0.3s ease-out;
+}
+
+/* Bouton qui s'enfonce sous le doigt. */
+.button {
+	transition:
+		transform 0.1s ease,
+		background-color 0.2s ease,
+		border-color 0.2s ease,
+		color 0.2s ease;
+}
+
+.button:not(:disabled):active {
+	transform: scale(0.97);
+}
+
+/* Titre qui tombe comme un coup de tampon sur un dossier (kill, élimination, fin). */
+@keyframes stamp {
+	0% {
+		opacity: 0;
+		transform: scale(1.8) rotate(-6deg);
+	}
+	60% {
+		opacity: 1;
+		transform: scale(0.95) rotate(-2deg);
+	}
+	100% {
+		transform: scale(1) rotate(0);
+	}
+}
+
+.stamp {
+	animation: stamp 0.45s 0.15s cubic-bezier(0.3, 0, 0.3, 1) backwards;
+	transform-origin: left center;
+}
+
+/* Le téléphone demande moins d'animations (réglage d'accessibilité) : on coupe tout. */
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-delay: 0s !important;
+		transition-duration: 0.01ms !important;
+	}
+}

@@ -43,7 +43,7 @@ function EliminatedPage({
 			</div>
 
 			<div className={styles.text}>
-				<p className={styles.title}>
+				<p className={`${styles.title} stamp`}>
 					{me.eliminatedBy
 						? `Tu t'es fait éliminer par ${me.eliminatedBy}`
 						: "Tu as quitté la partie"}
