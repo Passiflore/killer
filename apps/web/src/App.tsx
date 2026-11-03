@@ -121,7 +121,7 @@ function App() {
 				/>
 			);
 		}
-		if (game.status === "TERMINEE") return <EndPage game={game} />;
+		if (game.status === "TERMINEE") return <EndPage game={game} meId={me?.id ?? null} />;
 		return (
 			// Le socket annonce la partie avant que la réponse HTTP n'apporte le code orga :
 			// la `key` force l'espace orga à relire le code une fois qu'il est enregistré.
@@ -177,7 +177,7 @@ function App() {
 	}
 
 	if (game?.status === "TERMINEE") {
-		return <EndPage game={game} />;
+		return <EndPage game={game} meId={me?.id ?? null} />;
 	}
 
 	return <LobbyPage me={me} game={game} players={players} />;

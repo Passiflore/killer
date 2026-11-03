@@ -1,0 +1,39 @@
+.confetti {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+.piece {
+	position: absolute;
+	top: -20px;
+	width: 8px;
+	height: 14px;
+	opacity: 0;
+	animation-name: fall;
+	animation-timing-function: linear;
+	animation-fill-mode: forwards;
+}
+
+.round {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+}
+
+/* Chute en tournoyant, avec un écart sur le côté propre à chaque confetti (--drift). */
+@keyframes fall {
+	0% {
+		opacity: 1;
+		transform: translate(0, 0) rotate(0);
+	}
+	85% {
+		opacity: 1;
+	}
+	100% {
+		opacity: 0;
+		transform: translate(var(--drift), 110vh) rotate(720deg);
+	}
+}

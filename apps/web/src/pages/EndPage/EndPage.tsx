@@ -4,6 +4,7 @@ import { orgaRequest } from "../../api";
 import EndGame from "../../assets/EndGame";
 import Avatar from "../../components/Avatar/Avatar";
 import ConfirmModal from "../../components/ConfirmModal/ConfirmModal";
+import Confetti from "../../components/Confetti/Confetti";
 import { ORGA_CODE_KEY, TOKEN_KEY } from "../../storage";
 import styles from "./EndPage.module.css";
 import { errorMessage } from "../../errorMessage";
@@ -51,7 +52,8 @@ function AwardCard({
 	);
 }
 
-function EndPage({ game }: { game: Game }) {
+// meId : le joueur qui regarde cet écran (null pour un orga qui ne joue pas).
+function EndPage({ game, meId }: { game: Game; meId: number | null }) {
 	const [results, setResults] = useState<Results | null>(null);
 	const [isConfirming, setIsConfirming] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
@@ -127,6 +129,7 @@ function EndPage({ game }: { game: Game }) {
 
 	return (
 		<main>
+			{meId !== null && winnerIds.has(meId) && <Confetti />}
 			<div>
 				<p className="eyebrow">[{game.name}] / Dossier classé</p>
 				<p className={`${styles.title} stamp`}>Fin de partie</p>
