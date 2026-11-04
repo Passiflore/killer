@@ -1,25 +1,37 @@
+/* Titre sur sa ligne, puis le code à gauche et les boutons à droite.
+   Pas de hauteur fixe : la boîte grandit avec son contenu au lieu de déborder. */
 .box {
 	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 16px;
-	height: 65px;
-	padding: 0 16px;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px 16px;
 	border: 1px solid var(--border);
 	background: var(--surface);
 }
 
+.label {
+	margin-bottom: 0;
+	font-size: 12px;
+}
+
+.row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+}
+
 .code {
-	margin-top: 4px;
 	font-family: var(--font-hand);
-	font-size: 23px;
+	font-size: 28px;
 	line-height: 1;
 }
 
 .copy {
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: 8px;
+	white-space: nowrap;
 	padding: 0;
 	border: none;
 	background: none;
