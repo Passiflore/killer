@@ -26,3 +26,42 @@
 	color: var(--text-soft);
 	text-decoration: underline;
 }
+
+/* L'espion flotte doucement, en boucle (monte, redescend, remonte...). */
+@keyframes float {
+	from {
+		transform: translateY(0) rotate(0deg);
+	}
+	to {
+		transform: translateY(-8px) rotate(-1.5deg);
+	}
+}
+
+.logoContainer svg {
+	animation: float 2.4s ease-in-out infinite alternate;
+}
+
+/* Le slogan s'écrit lettre par lettre, comme à la machine à écrire. */
+@keyframes type {
+	from {
+		width: 0;
+	}
+}
+
+/* Le curseur clignote : sa bordure disparaît à mi-parcours. */
+@keyframes caret {
+	50% {
+		border-color: transparent;
+	}
+}
+
+.slogan {
+	/* 33 caractères ; chacun prend 1ch + l'espacement des lettres (0.08em). */
+	width: calc(33 * (1ch + 0.08em));
+	overflow: hidden;
+	white-space: nowrap;
+	border-right: 2px solid var(--red);
+	animation:
+		type 2.2s 0.4s steps(33) backwards,
+		caret 0.8s step-end infinite;
+}

@@ -31,7 +31,9 @@ function HomePage({ onCodeOk }: { onCodeOk: (code: string) => void }) {
 				<SpyWelcome />
 				<div>
 					<p className={styles.title}>Killer</p>
-					<p className="eyebrow">Piège tes amis. Garde ton secret.</p>
+					<p className={`eyebrow ${styles.slogan}`}>
+						Piège tes amis. Garde ton secret.
+					</p>
 				</div>
 			</div>
 
