@@ -90,10 +90,20 @@
 	background: var(--red);
 	color: var(--text);
 	font-size: 10px;
-	animation: pulse 1.2s ease-in-out 3;
+	animation:
+		pop 0.4s cubic-bezier(0.3, 1.6, 0.5, 1) backwards,
+		pulse 1.2s 0.4s ease-in-out 3;
 }
 
-/* Le badge « Nouvelle » clignote 3 fois pour attirer l'œil. */
+/* Le badge « Nouvelle » surgit en grossissant un peu trop, puis revient à sa taille. */
+@keyframes pop {
+	from {
+		opacity: 0;
+		transform: scale(0);
+	}
+}
+
+/* Puis il clignote 3 fois pour attirer l'œil. */
 @keyframes pulse {
 	50% {
 		opacity: 0.3;
@@ -129,6 +139,12 @@
 }
 
 /* Le flou s'efface en douceur quand on montre la cible ou la mission. */
+.target,
+.mission {
+	transition: filter 0.3s ease;
+}
+
+/* Le flou s'efface en douceur au lieu de disparaître d'un coup. */
 .target,
 .mission {
 	transition: filter 0.3s ease;

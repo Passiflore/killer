@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Game, Me, Player } from "shared";
 import { postAsPlayer } from "../../api";
 import Avatar from "../../components/Avatar/Avatar";
@@ -62,6 +62,16 @@ function PlayerPage({
 	const [confirming, setConfirming] = useState<
 		"kill" | "leave" | "mission" | null
 	>(null);
+
+	// Le téléphone vibre quand la cible change (Android seulement : l'iPhone ignore vibrate).
+	// Ce hook doit rester AVANT le "return" de chargement plus bas : React exige que les
+	// hooks soient appelés dans le même ordre à chaque rendu.
+	const targetId = me.target?.id;
+	useEffect(() => {
+		if (targetId !== seenTargetId && "vibrate" in navigator) {
+			navigator.vibrate([200, 100, 200]);
+		}
+	}, [targetId, seenTargetId]);
 
 	const alivePlayers = players.filter((player) => player.status === "VIVANT");
 	const isOrga = localStorage.getItem(ORGA_CODE_KEY) !== null;
