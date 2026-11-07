@@ -1,0 +1,23 @@
+.banner {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 100;
+	padding: 10px 16px;
+	padding-top: calc(10px + env(safe-area-inset-top));
+	background: var(--red);
+	color: var(--text);
+	font-size: 12px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	text-align: center;
+	animation: slide-down 0.3s ease-out;
+}
+
+/* Le bandeau descend du haut de l'écran. */
+@keyframes slide-down {
+	from {
+		transform: translateY(-100%);
+	}
+}
