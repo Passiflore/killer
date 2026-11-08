@@ -97,11 +97,14 @@ function App() {
 	}, []);
 
 	// Après chaque kill, le serveur envoie « refresh » : on redemande SES infos.
+	// Pareil à chaque (re)connexion : pendant une coupure, on a pu rater un « refresh ».
 	useEffect(() => {
 		const onRefresh = () => reloadMe(setMe);
 		socket.on("refresh", onRefresh);
+		socket.on("connect", onRefresh);
 		return () => {
 			socket.off("refresh", onRefresh);
+			socket.off("connect", onRefresh);
 		};
 	}, []);
 
